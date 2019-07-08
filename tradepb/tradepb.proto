@@ -1,0 +1,25 @@
+syntax="proto3";
+
+package trade;
+option go_package="tradepb";
+
+message Trade {
+    string id = 1;
+}
+
+message AddTradeRequest {
+    Trade trade = 1;
+}
+
+message AddTradeResponse {}
+
+message DeleteTradeRequest {}
+
+message DeleteTradeResponse {}
+
+
+service TradeService {
+    rpc AddTrade(AddTradeRequest) returns (AddTradeResponse) {};
+    rpc DeleteTrade(DeleteTradeRequest) returns (DeleteTradeResponse) {};
+
+}
