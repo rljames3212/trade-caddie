@@ -5,21 +5,54 @@ option go_package="tradepb";
 
 message Trade {
     string id = 1;
+    enum Type {
+        BUY = 1;
+        SELL = 2;
+    }
+    Type type = 2;
+    float price = 3;
+    int32 total = 4;
+    float fee = 5;
+    bool fiat = 6;
+    string date = 7;
 }
 
 message AddTradeRequest {
     Trade trade = 1;
+    int32 portfolioId = 2;
 }
 
-message AddTradeResponse {}
+message AddTradeResponse {
+    string tradeId = 1;
+}
 
-message DeleteTradeRequest {}
+message DeleteTradeRequest {
+    int32 tradeId = 1;
+    int32 portfolioId = 2;
+}
 
 message DeleteTradeResponse {}
 
+message UpdateTradeRequest {
+    int32 tradeId = 1;
+    int32 portfolioId = 2;
+    Trade trade = 3;
+}
+
+message UpdateTradeResponse {}
+
+message GetTradeRequest {
+    int32 tradeId = 1;
+    int32 portfolioId = 2;
+}
+
+message GetTradeResponse {
+    Trade trade = 1;
+}
 
 service TradeService {
-    rpc AddTrade(AddTradeRequest) returns (AddTradeResponse) {};
-    rpc DeleteTrade(DeleteTradeRequest) returns (DeleteTradeResponse) {};
-
+    rpc AddTrade (AddTradeRequest) returns (AddTradeResponse) {};
+    rpc DeleteTrade (DeleteTradeRequest) returns (DeleteTradeResponse) {};
+    rpc UpdateTrade (UpdateTradeRequest) returns (UpdateTradeResponse) {};
+    rpc GetTrade (GetTradeRequest) returns (GetTradeResponse) {};
 }
