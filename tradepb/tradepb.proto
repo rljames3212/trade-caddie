@@ -6,8 +6,8 @@ option go_package="tradepb";
 message Trade {
     string id = 1;
     enum Type {
-        BUY = 1;
-        SELL = 2;
+        BUY = 0;
+        SELL = 1;
     }
     Type type = 2;
     float price = 3;
