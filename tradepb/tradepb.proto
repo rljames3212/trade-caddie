@@ -10,11 +10,13 @@ message Trade {
         SELL = 1;
     }
     Type type = 2;
-    float price = 3;
-    int32 total = 4;
-    float fee = 5;
-    bool fiat = 6;
-    string date = 7;
+    string market = 3;
+    float price = 4;
+    float amount = 5;
+    float fee = 6;
+    float total = 7;
+    bool fiat_ind = 8;
+    string date = 9;
 }
 
 message AddTradeRequest {
@@ -31,7 +33,9 @@ message DeleteTradeRequest {
     int32 portfolioId = 2;
 }
 
-message DeleteTradeResponse {}
+message DeleteTradeResponse {
+    int32 deletedCount = 1;
+}
 
 message UpdateTradeRequest {
     int32 tradeId = 1;
@@ -39,7 +43,9 @@ message UpdateTradeRequest {
     Trade trade = 3;
 }
 
-message UpdateTradeResponse {}
+message UpdateTradeResponse {
+    int32 modifiedCount = 1;
+}
 
 message GetTradeRequest {
     int32 tradeId = 1;
