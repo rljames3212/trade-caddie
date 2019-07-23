@@ -11,6 +11,7 @@ import (
 	"trade-caddie/tradepb"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -27,15 +28,6 @@ func init() {
 	port = flag.String("port", ":5000", "port to run server on")
 	flag.Parse()
 
-	// create database connection
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-
-	var err error
-	db, err = mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		logger.Fatalf("Error connecting to database: %v", err)
-	}
-
 	// initialize logger
 	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -44,7 +36,14 @@ func init() {
 	defer f.Close()
 
 	logger = log.New(f, time.Now().Format("01-02-2006 15:04:05 "), 0)
-	logger.Printf("Server started on port %v\n", *port)
+
+	// create database client
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+
+	db, err = mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		logger.Fatalf("Error creating database client: %v", err)
+	}
 }
 
 func main() {
@@ -77,7 +76,7 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	}
 
 	res := &tradepb.AddTradeResponse{
-		TradeId: insertResult.InsertedID.(string),
+		TradeId: insertResult.InsertedID.(primitive.ObjectID).Hex(),
 	}
 	return res, nil
 }
@@ -88,7 +87,7 @@ func (*server) DeleteTrade(ctx context.Context, req *tradepb.DeleteTradeRequest)
 	tradeID := req.GetTradeId()
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
-	filter := bson.D{{"_id", tradeID}}
+	filter := bson.D{{Key: "_id", Value: tradeID}}
 	deleteResult, err := tradeCollection.DeleteOne(ctx, filter)
 
 	if err != nil {
@@ -110,7 +109,7 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 	tradeID := req.GetTradeId()
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
-	filter := bson.D{{"_id", tradeID}}
+	filter := bson.D{{Key: "_id", Value: tradeID}}
 	updateResult, err := tradeCollection.UpdateOne(ctx, filter, updatedTrade)
 
 	if err != nil {
@@ -128,13 +127,17 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 // GetTrade retrieves a trade from a portfolio
 func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tradepb.GetTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
-	tradeID := req.GetTradeId()
+	tradeID, err := primitive.ObjectIDFromHex(req.GetTradeId())
+	if err != nil {
+		logger.Printf("Error converting %v to ObjectID in GetTrade call: %v", req.GetTradeId(), err)
+		return nil, err
+	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
-	filter := bson.D{{"_id", tradeID}}
+	filter := bson.D{{Key: "_id", Value: tradeID}}
 
 	var trade tradepb.Trade
-	err := tradeCollection.FindOne(ctx, filter).Decode(&trade)
+	err = tradeCollection.FindOne(ctx, filter).Decode(&trade)
 
 	if err != nil {
 		logger.Printf("Error retrieving trade with _id %v from portfolio %v: %v", tradeID, portfolioID, err)

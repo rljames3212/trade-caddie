@@ -4,19 +4,18 @@ package trade;
 option go_package="tradepb";
 
 message Trade {
-    string id = 1;
     enum Type {
         BUY = 0;
         SELL = 1;
     }
-    Type type = 2;
-    string market = 3;
-    float price = 4;
-    float amount = 5;
-    float fee = 6;
-    float total = 7;
-    bool fiat_ind = 8;
-    string date = 9;
+    Type type = 1;
+    string market = 2;
+    float price = 3;
+    float amount = 4;
+    float fee = 5;
+    float total = 6;
+    bool fiat_ind = 7;
+    string date = 8;
 }
 
 message AddTradeRequest {
@@ -29,7 +28,7 @@ message AddTradeResponse {
 }
 
 message DeleteTradeRequest {
-    int32 tradeId = 1;
+    string tradeId = 1;
     int32 portfolioId = 2;
 }
 
@@ -38,7 +37,7 @@ message DeleteTradeResponse {
 }
 
 message UpdateTradeRequest {
-    int32 tradeId = 1;
+    string tradeId = 1;
     int32 portfolioId = 2;
     Trade trade = 3;
 }
@@ -48,7 +47,7 @@ message UpdateTradeResponse {
 }
 
 message GetTradeRequest {
-    int32 tradeId = 1;
+    string tradeId = 1;
     int32 portfolioId = 2;
 }
 
