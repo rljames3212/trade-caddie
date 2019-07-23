@@ -40,7 +40,7 @@ func init() {
 	// create database client
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
 
-	db, err = mongo.NewClient(clientOptions)
+	db, err = mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		logger.Fatalf("Error creating database client: %v", err)
 	}
@@ -67,14 +67,6 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	portfolioID := req.GetPortfolioId()
 	trade := req.GetTrade()
 
-	// connect to database
-	err := db.Connect(ctx)
-	if err != nil {
-		logger.Printf("Error connecting to database in AddTrade call: %v", err)
-		return nil, err
-	}
-	defer db.Disconnect(ctx)
-
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	insertResult, err := tradeCollection.InsertOne(ctx, trade)
 
@@ -93,14 +85,6 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 func (*server) DeleteTrade(ctx context.Context, req *tradepb.DeleteTradeRequest) (*tradepb.DeleteTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
 	tradeID := req.GetTradeId()
-
-	// connect to database
-	err := db.Connect(ctx)
-	if err != nil {
-		logger.Printf("Error connecting to database in AddTrade call: %v", err)
-		return nil, err
-	}
-	defer db.Disconnect(ctx)
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
@@ -124,14 +108,6 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 	updatedTrade := req.GetTrade()
 	tradeID := req.GetTradeId()
 
-	// connect to database
-	err := db.Connect(ctx)
-	if err != nil {
-		logger.Printf("Error connecting to database in AddTrade call: %v", err)
-		return nil, err
-	}
-	defer db.Disconnect(ctx)
-
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
 	updateResult, err := tradeCollection.UpdateOne(ctx, filter, updatedTrade)
@@ -151,15 +127,11 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 // GetTrade retrieves a trade from a portfolio
 func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tradepb.GetTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
-	tradeID := req.GetTradeId()
-
-	// connect to database
-	err := db.Connect(ctx)
+	tradeID, err := primitive.ObjectIDFromHex(req.GetTradeId())
 	if err != nil {
-		logger.Printf("Error connecting to database in AddTrade call: %v", err)
+		logger.Printf("Error converting %v to ObjectID in GetTrade call: %v", req.GetTradeId(), err)
 		return nil, err
 	}
-	defer db.Disconnect(ctx)
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
