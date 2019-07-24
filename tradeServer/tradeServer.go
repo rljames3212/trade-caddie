@@ -67,6 +67,8 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	portfolioID := req.GetPortfolioId()
 	trade := req.GetTrade()
 
+	trade.XId = primitive.NewObjectID().Hex()
+
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	insertResult, err := tradeCollection.InsertOne(ctx, trade)
 
@@ -76,7 +78,7 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	}
 
 	res := &tradepb.AddTradeResponse{
-		TradeId: insertResult.InsertedID.(primitive.ObjectID).Hex(),
+		TradeId: insertResult.InsertedID.(string),
 	}
 	return res, nil
 }
@@ -127,17 +129,13 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 // GetTrade retrieves a trade from a portfolio
 func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tradepb.GetTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
-	tradeID, err := primitive.ObjectIDFromHex(req.GetTradeId())
-	if err != nil {
-		logger.Printf("Error converting %v to ObjectID in GetTrade call: %v", req.GetTradeId(), err)
-		return nil, err
-	}
+	tradeID := req.GetTradeId()
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
 
 	var trade tradepb.Trade
-	err = tradeCollection.FindOne(ctx, filter).Decode(&trade)
+	err := tradeCollection.FindOne(ctx, filter).Decode(&trade)
 
 	if err != nil {
 		logger.Printf("Error retrieving trade with _id %v from portfolio %v: %v", tradeID, portfolioID, err)
