@@ -112,7 +112,8 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
-	updateResult, err := tradeCollection.UpdateOne(ctx, filter, updatedTrade)
+	update := bson.M{"$set": updatedTrade}
+	updateResult, err := tradeCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		logger.Printf("Error updating trade with _id %v in portfolio %v: %v", tradeID, portfolioID, err)
