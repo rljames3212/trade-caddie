@@ -4,18 +4,28 @@ package trade;
 option go_package="tradepb";
 
 message Trade {
+    // @inject_tag: bson:"_id"
+    string _id = 1;
     enum Type {
         BUY = 0;
         SELL = 1;
     }
-    Type type = 1;
-    string market = 2;
-    float price = 3;
-    float amount = 4;
-    float fee = 5;
-    float total = 6;
-    bool fiat_ind = 7;
-    string date = 8;
+    // @inject_tag: bson:"type"
+    Type type = 2;
+    // @inject_tag: bson:"market"
+    string market = 3;
+    // @inject_tag: bson:"price"
+    float price = 4;
+    // @inject_tag: bson:"amount"
+    float amount = 5;
+    // @inject_tag: bson:"fee"
+    float fee = 6;
+    // @inject_tag: bson:"total"
+    float total = 7;
+    // @inject_tag: bson:"fiat_ind"
+    bool fiat_ind = 8;
+    // @inject_tag: bson:"date"
+    string date = 9;
 }
 
 message AddTradeRequest {
