@@ -100,7 +100,7 @@ func UpdateTrade(tradeID string, trade *tradepb.Trade, portfolioID int32, client
 
 	_, err := client.UpdateTrade(context.Background(), req)
 	if err != nil {
-		logger.Println("Error calling UpdateTrade with tradeID %v: %v", tradeID, err)
+		logger.Printf("Error calling UpdateTrade with tradeID %v: %v", tradeID, err)
 		return err
 	}
 	return nil
