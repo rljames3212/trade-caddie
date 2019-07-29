@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -142,6 +143,9 @@ func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
 
 	for {
 		msg, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
 		if err != nil {
 			logger.Printf("Error receiving trade on GetAllTrades stream: %v", err)
 		}

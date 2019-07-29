@@ -37,7 +37,7 @@ func init() {
 		log.Println("Error opening log file")
 	}
 
-	logger = log.New(loggerFile, time.Now().Format("01-02-2006 15:04:05 "), 0)
+	logger = log.New(loggerFile, time.Now().Format("01-02-2006T15:04:05 "), 0)
 
 	// create database client
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -184,6 +184,7 @@ func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.Tra
 	for cursor.Next(context.Background()) {
 		var result tradepb.Trade
 		err = cursor.Decode(&result)
+
 		if err != nil {
 			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
 		}
