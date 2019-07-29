@@ -44,6 +44,11 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	err = GetAllTrades(1, client)
+	if err != nil {
+		log.Println(err)
+	}
+
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
@@ -121,4 +126,26 @@ func UpdateTrade(tradeID string, trade *tradepb.Trade, portfolioID int32, client
 		return err
 	}
 	return nil
+}
+
+// GetAllTrades returns a stream of all trades in a portfolio
+func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
+	req := &tradepb.GetAllTradesRequest{
+		PortfolioId: portfolioID,
+	}
+
+	stream, err := client.GetAllTrades(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling GetAllTrades with portfolio %v: %v", portfolioID, err)
+		return err
+	}
+
+	for {
+		msg, err := stream.Recv()
+		if err != nil {
+			logger.Printf("Error receiving trade on GetAllTrades stream: %v", err)
+		}
+
+		log.Println(msg.GetTrade())
+	}
 }

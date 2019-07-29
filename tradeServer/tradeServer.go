@@ -166,3 +166,34 @@ func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tra
 
 	return res, nil
 }
+
+// GetAllTrades returns a stream of all trades din a portfolio
+func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.TradeService_GetAllTradesServer) error {
+	portfolioID := req.GetPortfolioId()
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.D{}
+
+	// get all trades
+	cursor, err := tradeCollection.Find(context.TODO(), filter)
+	if err != nil {
+		logger.Printf("Error retrieving all trades from portfolio %v: %v", portfolioID, err)
+		return err
+	}
+
+	// iterate through trades and send each on the stream
+	for cursor.Next(context.Background()) {
+		var result tradepb.Trade
+		err = cursor.Decode(&result)
+		if err != nil {
+			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
+		}
+
+		sendErr := stream.Send(&tradepb.GetAllTradesResponse{
+			Trade: &result,
+		})
+		if sendErr != nil {
+			logger.Printf("Error returning trade: %v", err)
+		}
+	}
+	return nil
+}
