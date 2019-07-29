@@ -5,6 +5,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 	"trade-caddie/tradepb"
 
@@ -13,6 +15,7 @@ import (
 
 var client tradepb.TradeServiceClient
 var logger *log.Logger
+var logFile *os.File
 var port *string
 
 func init() {
@@ -21,13 +24,12 @@ func init() {
 	flag.Parse()
 
 	// initialize logger
-	f, err := os.OpenFile("tradeClient/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, err := os.OpenFile("tradeClient/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		log.Println("Unable to open log file")
+		log.Fatal("Unable to open log file")
 	}
-	defer f.Close()
 
-	logger = log.New(f, time.Now().Format("01-02-2006 15:04:05 "), 0)
+	logger = log.New(logFile, time.Now().Format("01-02-2006 15:04:05 "), 0)
 	logger.Printf("Starting client")
 }
 
@@ -41,6 +43,19 @@ func main() {
 
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
+
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGINT)
+	signal.Notify(stopChan, syscall.SIGTERM)
+
+	go func() {
+		sig := <-stopChan
+		logger.Printf("signal: %+v received. Shutting down", sig)
+		defer logFile.Close()
+		os.Exit(0)
+	}()
+
+	<-stopChan
 }
 
 // AddTrade adds a trade to a portfolio
