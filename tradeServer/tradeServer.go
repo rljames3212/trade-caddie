@@ -59,10 +59,12 @@ func main() {
 	grpcServer := grpc.NewServer()
 	tradepb.RegisterTradeServiceServer(grpcServer, server)
 
+	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGTERM)
 	signal.Notify(stopChan, syscall.SIGINT)
-	
+
+	// cleanup resources on interrupt
 	go func() {
 		sig := <-stopChan
 		logger.Printf("signal: %+v received. Shutting down", sig)

@@ -44,10 +44,12 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
 	signal.Notify(stopChan, syscall.SIGTERM)
 
+	// cleanup resources on interrupt
 	go func() {
 		sig := <-stopChan
 		logger.Printf("signal: %+v received. Shutting down", sig)
