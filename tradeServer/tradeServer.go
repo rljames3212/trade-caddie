@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 	"trade-caddie/tradepb"
 
@@ -19,6 +21,7 @@ import (
 
 var port *string
 var logger *log.Logger
+var loggerFile *os.File
 var db *mongo.Client
 
 type server struct{}
@@ -29,13 +32,12 @@ func init() {
 	flag.Parse()
 
 	// initialize logger
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	loggerFile, err := os.OpenFile("tradeServer/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Println("Error opening log file")
 	}
-	defer f.Close()
 
-	logger = log.New(f, time.Now().Format("01-02-2006 15:04:05 "), 0)
+	logger = log.New(loggerFile, time.Now().Format("01-02-2006 15:04:05 "), 0)
 
 	// create database client
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -57,6 +59,19 @@ func main() {
 	grpcServer := grpc.NewServer()
 	tradepb.RegisterTradeServiceServer(grpcServer, server)
 
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGTERM)
+	signal.Notify(stopChan, syscall.SIGINT)
+	
+	go func() {
+		sig := <-stopChan
+		logger.Printf("signal: %+v received. Shutting down", sig)
+		defer loggerFile.Close()
+		db.Disconnect(context.Background())
+		os.Exit(0)
+	}()
+
+	// start server
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Fatalf("Failed to serve: %v", err)
 	}
