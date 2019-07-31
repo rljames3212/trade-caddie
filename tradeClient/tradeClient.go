@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -45,10 +47,11 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	err = GetAllTrades(1, client)
+	trade, err := GetTrade("5d38f04871d3c9d51a8f299a", 1, client)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
+	log.Println(rowify(trade))
 
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -152,4 +155,20 @@ func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
 
 		log.Println(msg.GetTrade())
 	}
+}
+
+// rowify parses a trade into a string that represents a csv row
+func rowify(trade *tradepb.Trade) string {
+	val := reflect.Indirect(reflect.ValueOf(trade))
+	row := ""
+
+	for i := 0; i < val.NumField()-3; i++ {
+		elem := val.Field(i)
+		if i == 0 {
+			row = fmt.Sprintf("%v", elem)
+		} else {
+			row = fmt.Sprintf("%s,%v", row, elem)
+		}
+	}
+	return row
 }
