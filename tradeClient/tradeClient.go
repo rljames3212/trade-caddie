@@ -3,12 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/signal"
-	"reflect"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -46,12 +44,6 @@ func main() {
 
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
-
-	trade, err := GetTrade("5d38f04871d3c9d51a8f299a", 1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(rowify(trade))
 
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -133,7 +125,7 @@ func UpdateTrade(tradeID string, trade *tradepb.Trade, portfolioID int32, client
 }
 
 // GetAllTrades returns a stream of all trades in a portfolio
-func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
+func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) ([]*tradepb.Trade, error) {
 	req := &tradepb.GetAllTradesRequest{
 		PortfolioId: portfolioID,
 	}
@@ -141,34 +133,45 @@ func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
 	stream, err := client.GetAllTrades(context.Background(), req)
 	if err != nil {
 		logger.Printf("Error calling GetAllTrades with portfolio %v: %v", portfolioID, err)
-		return err
+		return nil, err
 	}
 
+	trades := []*tradepb.Trade{}
 	for {
 		msg, err := stream.Recv()
 		if err == io.EOF {
-			return nil
+			return trades, nil
 		}
 		if err != nil {
 			logger.Printf("Error receiving trade on GetAllTrades stream: %v", err)
 		}
-
-		log.Println(msg.GetTrade())
+		trades = append(trades, msg.GetTrade())
 	}
 }
 
-// rowify parses a trade into a string that represents a csv row
-func rowify(trade *tradepb.Trade) string {
-	val := reflect.Indirect(reflect.ValueOf(trade))
-	row := ""
+// Export writes a slice of trades to a csv file named export.csv
+func Export(trades []*tradepb.Trade, client tradepb.TradeServiceClient) error {
+	stream, err := client.Export(context.Background())
+	if err != nil {
+		logger.Printf("Error creating export stream: %v", err)
+		return err
+	}
 
-	for i := 0; i < val.NumField()-3; i++ {
-		elem := val.Field(i)
-		if i == 0 {
-			row = fmt.Sprintf("%v", elem)
-		} else {
-			row = fmt.Sprintf("%s,%v", row, elem)
+	for _, trade := range trades {
+		err = stream.Send(&tradepb.ExportRequest{
+			Trade: trade,
+		})
+		if err != nil {
+			logger.Printf("Error sending trade on export stream: %v", err)
+			return err
 		}
 	}
-	return row
+	result, err := stream.CloseAndRecv()
+	if err != nil {
+		logger.Printf("Error receiving response from server on export: %v", err)
+		return err
+	}
+
+	logger.Printf("%v trades exported to csv", result.NumTrades)
+	return nil
 }

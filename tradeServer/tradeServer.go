@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -197,4 +200,47 @@ func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.Tra
 		}
 	}
 	return nil
+}
+
+func (*server) Export(stream tradepb.TradeService_ExportServer) error {
+	csvfile, err := os.OpenFile("export.csv", os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		logger.Printf("Error opening export file: %v", err)
+		return err
+	}
+
+	csvwriter := csv.NewWriter(csvfile)
+	tradeCount := int32(0)
+	for {
+		trade, err := stream.Recv()
+		if err == io.EOF {
+			csvwriter.Flush()
+			if err = csvwriter.Error(); err != nil {
+				logger.Printf("Error flushing csv writer: %v", err)
+				return err
+			}
+			return stream.SendAndClose(&tradepb.ExportResponse{
+				NumTrades: tradeCount,
+			})
+		}
+		tradeCount++
+		row := rowify(trade.GetTrade())
+
+		if err := csvwriter.Write(row); err != nil {
+			logger.Printf("Error writing trade to csv( %v ): %v", row, err)
+			return err
+		}
+	}
+}
+
+// rowify parses a trade into a string that represents a csv row
+func rowify(trade *tradepb.Trade) []string {
+	val := reflect.Indirect(reflect.ValueOf(trade))
+	row := []string{}
+
+	for i := 0; i < val.NumField()-3; i++ {
+		elem := val.Field(i)
+		row = append(row, fmt.Sprintf("%v", elem))
+	}
+	return row
 }

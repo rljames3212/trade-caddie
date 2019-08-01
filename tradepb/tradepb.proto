@@ -73,10 +73,20 @@ message GetAllTradesResponse {
     Trade trade = 1;
 }
 
+message ExportRequest {
+    Trade trade = 1;
+    int32 portfolioId = 2;
+}
+
+message ExportResponse {
+    int32 numTrades = 1;
+}
+
 service TradeService {
     rpc AddTrade (AddTradeRequest) returns (AddTradeResponse) {};
     rpc DeleteTrade (DeleteTradeRequest) returns (DeleteTradeResponse) {};
     rpc UpdateTrade (UpdateTradeRequest) returns (UpdateTradeResponse) {};
     rpc GetTrade (GetTradeRequest) returns (GetTradeResponse) {};
     rpc GetAllTrades (GetAllTradesRequest) returns (stream GetAllTradesResponse) {};
+    rpc Export (stream ExportRequest) returns (ExportResponse) {};
 }
