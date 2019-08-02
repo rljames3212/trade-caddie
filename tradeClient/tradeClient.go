@@ -49,11 +49,15 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	trade, err := parseRow(strings.Split("5d38f04871d3c9d51a8f299a,BUY,BSV_BTC,0.04,5,0.01,0.21,false,2018-07-25 18:55:00", ","))
+	trade, err := parseRow(strings.Split("5d38f04871d3c9d51a8f2990,SELL,BCH_BTC,0.01,10,0.01,0.12,true,2019-08-02T16:37:00", ","))
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(trade)
+
+	err = importTrades([]*tradepb.Trade{trade}, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -183,6 +187,34 @@ func Export(trades []*tradepb.Trade, client tradepb.TradeServiceClient) error {
 	}
 
 	logger.Printf("%v trades exported to csv", result.NumTrades)
+	return nil
+}
+
+// importTrades receives a slice of trades and imports them to the specified portfolio
+func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.TradeServiceClient) error {
+	stream, err := client.Import(context.Background())
+	if err != nil {
+		logger.Printf("Error creating import stream: %v", err)
+		return err
+	}
+
+	for _, trade := range trades {
+		err = stream.Send(&tradepb.ImportRequest{
+			Trade:       trade,
+			PortfolioId: portfolioID,
+		})
+		if err != nil {
+			logger.Printf("Error sending trade on import stream: %v", err)
+			return err
+		}
+	}
+	result, err := stream.CloseAndRecv()
+	if err != nil {
+		logger.Printf("Error receiving response from server on export: %v", err)
+		return err
+	}
+
+	logger.Printf("%v trades imported", result.NumImported)
 	return nil
 }
 

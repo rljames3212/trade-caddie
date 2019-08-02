@@ -272,7 +272,7 @@ func rowify(trade *tradepb.Trade) []string {
 	val := reflect.Indirect(reflect.ValueOf(trade))
 	row := []string{}
 
-	for i := 0; i < val.NumField()-3; i++ {
+	for i := 1; i < val.NumField()-3; i++ {
 		elem := val.Field(i)
 		row = append(row, fmt.Sprintf("%v", elem))
 	}
