@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/signal"
+	"reflect"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -44,6 +48,12 @@ func main() {
 
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
+
+	trade, err := parseRow(strings.Split("5d38f04871d3c9d51a8f299a,BUY,BSV_BTC,0.04,5,0.01,0.21,false,2018-07-25 18:55:00", ","))
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(trade)
 
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -174,4 +184,47 @@ func Export(trades []*tradepb.Trade, client tradepb.TradeServiceClient) error {
 
 	logger.Printf("%v trades exported to csv", result.NumTrades)
 	return nil
+}
+
+func parseRow(row []string) (*tradepb.Trade, error) {
+	trade := tradepb.Trade{}
+	val := reflect.ValueOf(&trade)
+	for i, field := range row {
+		tradeField := val.Elem().Field(i)
+		switch tradeField.Interface().(type) {
+		case string:
+			temp := string([]byte(field))
+			tradeField.SetString(temp)
+		case int32:
+			num, err := strconv.Atoi(field)
+			if err != nil {
+				logger.Printf("Error parsing string ( %v ) to int: %v", field, err)
+				return nil, err
+			}
+			tradeField.SetInt(int64(num))
+		case float32:
+			num, err := strconv.ParseFloat(field, 32)
+			if err != nil {
+				logger.Printf("Error parsing string ( %v ) to float: %v", field, err)
+				return nil, err
+			}
+			tradeField.SetFloat(num)
+		case bool:
+			b, err := strconv.ParseBool(field)
+			if err != nil {
+				logger.Printf("Error parsing string ( %v ) to bool: %v", field, err)
+				return nil, err
+			}
+			tradeField.SetBool(b)
+		case tradepb.Trade_Type:
+			x := tradepb.Trade_Type_value[field]
+			tradeField.Set(reflect.ValueOf(tradepb.Trade_Type(x)))
+		default:
+			err := fmt.Errorf("Error unexpected type parsing string ( %v )", field)
+			logger.Println(err)
+			return nil, err
+		}
+
+	}
+	return &trade, nil
 }

@@ -202,6 +202,7 @@ func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.Tra
 	return nil
 }
 
+// Export receives a stream of trades and exports them as a csv file
 func (*server) Export(stream tradepb.TradeService_ExportServer) error {
 	csvfile, err := os.OpenFile("export.csv", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -230,6 +231,39 @@ func (*server) Export(stream tradepb.TradeService_ExportServer) error {
 			logger.Printf("Error writing trade to csv( %v ): %v", row, err)
 			return err
 		}
+	}
+}
+
+// Import receives a stream of trades and imports each into a specified portfolio
+// note: all ImportRequests must have the same portfolioID
+func (*server) Import(stream tradepb.TradeService_ImportServer) error {
+	trades := []interface{}{}
+	var portfolioID int32
+	numTrades := int32(0)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+			result, err := tradeCollection.InsertMany(context.Background(), trades)
+			if err != nil {
+				logger.Printf("Error importing trades to portfolio %v: %v", portfolioID, err)
+				return err
+			}
+
+			logger.Printf("Imported %v trades to portfolio %v", len(result.InsertedIDs), portfolioID)
+			return stream.SendAndClose(&tradepb.ImportResponse{
+				NumImported: numTrades,
+			})
+		}
+		if err != nil {
+			logger.Printf("Error receiving on import stream: %v", err)
+			return err
+		}
+
+		trade := req.GetTrade()
+		trades = append(trades, trade)
+		portfolioID = req.GetPortfolioId()
+		numTrades++
 	}
 }
 
