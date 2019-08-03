@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"reflect"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -48,16 +47,6 @@ func main() {
 
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
-
-	trade, err := parseRow(strings.Split("5d38f04871d3c9d51a8f2990,SELL,BCH_BTC,0.01,10,0.01,0.12,true,2019-08-02T16:37:00", ","))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = importTrades([]*tradepb.Trade{trade}, 1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -218,6 +207,35 @@ func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.Tra
 	return nil
 }
 
+// GetTradesByMarket gets all trades in a specific market from a portfolio
+func GetTradesByMarket(market string, portfolioID int32, client tradepb.TradeServiceClient) ([]*tradepb.Trade, error) {
+	req := &tradepb.GetTradesByMarketRequest{
+		Market:      market,
+		PortfolioId: portfolioID,
+	}
+
+	stream, err := client.GetTradesByMarket(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling GetTradesByMarket with market: %v and portfolio %v: %v", market, portfolioID, err)
+		return nil, err
+	}
+
+	trades := []*tradepb.Trade{}
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			return trades, nil
+		}
+		if err != nil {
+			logger.Printf("Error receiving trade on GetTradesByMarket stream: %v", err)
+			return nil, err
+		}
+		trades = append(trades, res.GetTrade())
+	}
+
+}
+
+// parseRow parses a csv row into a trade
 func parseRow(row []string) (*tradepb.Trade, error) {
 	trade := tradepb.Trade{}
 	val := reflect.ValueOf(&trade)
