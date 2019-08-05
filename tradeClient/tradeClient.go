@@ -48,6 +48,28 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	trade := &tradepb.Trade{
+		Type:    tradepb.Trade_BUY,
+		Market:  "STR_BTC",
+		Price:   0.001,
+		Amount:  1000.0,
+		Fee:     .001,
+		Total:   1.001,
+		FiatInd: true,
+	}
+
+	id, err := AddTrade(trade, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(id)
+
+	trades, err := GetTradesByDateRange("2019-08-04T00:00:00", "2019-08-06T00:00:00", 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(trades)
+
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
@@ -235,6 +257,34 @@ func GetTradesByMarket(market string, portfolioID int32, client tradepb.TradeSer
 
 }
 
+// GetTradesByDateRange returns a slice of trades that are within a provided date range from a portfolio
+func GetTradesByDateRange(startDate, endDate string, portfolioID int32, client tradepb.TradeServiceClient) ([]*tradepb.Trade, error) {
+	req := &tradepb.GetTradesByDateRangeRequest{
+		StartDate:   startDate,
+		EndDate:     endDate,
+		PortfolioId: portfolioID,
+	}
+
+	stream, err := client.GetTradesByDateRange(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling GetTradesByDateRange with start date: %v , end date: %v , and portfolio %v: %v", startDate, endDate, portfolioID, err)
+		return nil, err
+	}
+
+	trades := []*tradepb.Trade{}
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			return trades, nil
+		}
+		if err != nil {
+			logger.Printf("Error receiving trade on GetTradesByMarket stream: %v", err)
+			return nil, err
+		}
+		trades = append(trades, res.GetTrade())
+	}
+}
+
 // parseRow parses a csv row into a trade
 func parseRow(row []string) (*tradepb.Trade, error) {
 	trade := tradepb.Trade{}
@@ -245,7 +295,7 @@ func parseRow(row []string) (*tradepb.Trade, error) {
 		case string:
 			temp := string([]byte(field))
 			tradeField.SetString(temp)
-		case int32:
+		case int32, int64:
 			num, err := strconv.Atoi(field)
 			if err != nil {
 				logger.Printf("Error parsing string ( %v ) to int: %v", field, err)

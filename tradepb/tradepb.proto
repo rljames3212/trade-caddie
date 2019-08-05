@@ -25,7 +25,7 @@ message Trade {
     // @inject_tag: bson:"fiat_ind"
     bool fiat_ind = 8;
     // @inject_tag: bson:"date"
-    string date = 9;
+    int64 date = 9;
 }
 
 message AddTradeRequest {
@@ -61,6 +61,10 @@ message GetTradeRequest {
     int32 portfolioId = 2;
 }
 
+message GetTradeResponse {
+    Trade trade = 1;
+}
+
 message GetTradesByMarketRequest {
     string market = 1;
     int32 portfolioId = 2;
@@ -70,7 +74,13 @@ message GetTradesByMarketResponse {
     Trade trade = 1;
 }
 
-message GetTradeResponse {
+message GetTradesByDateRangeRequest {
+    string start_date = 1;
+    string end_date = 2;
+    int32 portfolioId = 3;
+}
+
+message GetTradesByDateRangeResponse {
     Trade trade = 1;
 }
 
@@ -106,6 +116,7 @@ service TradeService {
     rpc UpdateTrade (UpdateTradeRequest) returns (UpdateTradeResponse) {};
     rpc GetTrade (GetTradeRequest) returns (GetTradeResponse) {};
     rpc GetTradesByMarket (GetTradesByMarketRequest) returns (stream GetTradesByMarketResponse) {};
+    rpc GetTradesByDateRange (GetTradesByDateRangeRequest) returns (stream GetTradesByDateRangeResponse) {};
     rpc GetAllTrades (GetAllTradesRequest) returns (stream GetAllTradesResponse) {};
     rpc Export (stream ExportRequest) returns (ExportResponse) {};
     rpc Import (stream ImportRequest) returns (ImportResponse) {};

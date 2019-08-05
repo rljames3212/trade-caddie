@@ -88,6 +88,9 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	trade := req.GetTrade()
 
 	trade.XId = primitive.NewObjectID().Hex()
+	if trade.GetDate() == 0 {
+		trade.Date = time.Now().UnixNano()
+	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	insertResult, err := tradeCollection.InsertOne(ctx, trade)
@@ -170,7 +173,7 @@ func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tra
 	return res, nil
 }
 
-// GetAllTrades returns a stream of all trades din a portfolio
+// GetAllTrades returns a stream of all trades in a portfolio
 func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.TradeService_GetAllTradesServer) error {
 	portfolioID := req.GetPortfolioId()
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
@@ -182,6 +185,7 @@ func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.Tra
 		logger.Printf("Error retrieving all trades from portfolio %v: %v", portfolioID, err)
 		return err
 	}
+	defer cursor.Close(context.Background())
 
 	// iterate through trades and send each on the stream
 	for cursor.Next(context.Background()) {
@@ -280,6 +284,7 @@ func (*server) GetTradesByMarket(req *tradepb.GetTradesByMarketRequest, stream t
 		logger.Printf("Error querying database in GetTradesByMarket ( %v ): %v", market, err)
 		return err
 	}
+	defer cursor.Close(context.Background())
 
 	for cursor.Next(context.Background()) {
 		var result tradepb.Trade
@@ -290,6 +295,52 @@ func (*server) GetTradesByMarket(req *tradepb.GetTradesByMarketRequest, stream t
 		}
 
 		sendErr := stream.Send(&tradepb.GetTradesByMarketResponse{
+			Trade: &result,
+		})
+		if sendErr != nil {
+			logger.Printf("Error returning trade: %v", err)
+		}
+	}
+	return nil
+}
+
+// GetTradesByDateRange returns a stream of trades within a specified date range
+func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, stream tradepb.TradeService_GetTradesByDateRangeServer) error {
+	startDate, err := time.Parse("2006-01-02T15:04:05", req.GetStartDate())
+	if err != nil {
+		logger.Printf("Error parsing startDate ( %v ) to timestamp: %v", startDate, err)
+		return err
+	}
+	endDate, err := time.Parse("2006-01-02T15:04:05", req.GetEndDate())
+	if err != nil {
+		logger.Printf("Error parsing endDate ( %v ) to timestamp: %v", endDate, err)
+		return err
+	}
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{"date": bson.M{"$gte": startDate.UnixNano()}},
+			bson.M{"date": bson.M{"$lt": endDate.UnixNano()}},
+		},
+	}
+
+	cursor, err := tradeCollection.Find(context.Background(), filter)
+	if err != nil {
+		logger.Printf("Error querying database in GetTradesByDateRange ( %v , %v ): %v", startDate, endDate, err)
+		return err
+	}
+	defer cursor.Close(context.Background())
+
+	var result tradepb.Trade
+	for cursor.Next(context.Background()) {
+		err = cursor.Decode(&result)
+		if err != nil {
+			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
+		}
+
+		sendErr := stream.Send(&tradepb.GetTradesByDateRangeResponse{
 			Trade: &result,
 		})
 		if sendErr != nil {
