@@ -48,28 +48,6 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	trade := &tradepb.Trade{
-		Type:    tradepb.Trade_BUY,
-		Market:  "STR_BTC",
-		Price:   0.001,
-		Amount:  1000.0,
-		Fee:     .001,
-		Total:   1.001,
-		FiatInd: true,
-	}
-
-	id, err := AddTrade(trade, 1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(id)
-
-	trades, err := GetTradesByDateRange("2019-08-04T00:00:00", "2019-08-06T00:00:00", 1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(trades)
-
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
