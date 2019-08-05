@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -37,7 +40,7 @@ func init() {
 		log.Println("Error opening log file")
 	}
 
-	logger = log.New(loggerFile, time.Now().Format("01-02-2006 15:04:05 "), 0)
+	logger = log.New(loggerFile, time.Now().Format("01-02-2006T15:04:05 "), 0)
 
 	// create database client
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
@@ -85,6 +88,9 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 	trade := req.GetTrade()
 
 	trade.XId = primitive.NewObjectID().Hex()
+	if trade.GetDate() == 0 {
+		trade.Date = time.Now().UnixNano()
+	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	insertResult, err := tradeCollection.InsertOne(ctx, trade)
@@ -165,4 +171,194 @@ func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tra
 	}
 
 	return res, nil
+}
+
+// GetAllTrades returns a stream of all trades in a portfolio
+func (*server) GetAllTrades(req *tradepb.GetAllTradesRequest, stream tradepb.TradeService_GetAllTradesServer) error {
+	portfolioID := req.GetPortfolioId()
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.D{}
+
+	// get all trades
+	cursor, err := tradeCollection.Find(context.TODO(), filter)
+	if err != nil {
+		logger.Printf("Error retrieving all trades from portfolio %v: %v", portfolioID, err)
+		return err
+	}
+	defer cursor.Close(context.Background())
+
+	// iterate through trades and send each on the stream
+	for cursor.Next(context.Background()) {
+		var result tradepb.Trade
+		err = cursor.Decode(&result)
+
+		if err != nil {
+			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
+		}
+
+		sendErr := stream.Send(&tradepb.GetAllTradesResponse{
+			Trade: &result,
+		})
+		if sendErr != nil {
+			logger.Printf("Error returning trade: %v", err)
+		}
+	}
+	return nil
+}
+
+// Export receives a stream of trades and exports them as a csv file
+func (*server) Export(stream tradepb.TradeService_ExportServer) error {
+	csvfile, err := os.OpenFile("export.csv", os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		logger.Printf("Error opening export file: %v", err)
+		return err
+	}
+
+	csvwriter := csv.NewWriter(csvfile)
+	tradeCount := int32(0)
+	for {
+		trade, err := stream.Recv()
+		if err == io.EOF {
+			csvwriter.Flush()
+			if err = csvwriter.Error(); err != nil {
+				logger.Printf("Error flushing csv writer: %v", err)
+				return err
+			}
+			return stream.SendAndClose(&tradepb.ExportResponse{
+				NumTrades: tradeCount,
+			})
+		}
+		tradeCount++
+		row := rowify(trade.GetTrade())
+
+		if err := csvwriter.Write(row); err != nil {
+			logger.Printf("Error writing trade to csv( %v ): %v", row, err)
+			return err
+		}
+	}
+}
+
+// Import receives a stream of trades and imports each into a specified portfolio
+// note: all ImportRequests must have the same portfolioID
+func (*server) Import(stream tradepb.TradeService_ImportServer) error {
+	trades := []interface{}{}
+	var portfolioID int32
+	numTrades := int32(0)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+			result, err := tradeCollection.InsertMany(context.Background(), trades)
+			if err != nil {
+				logger.Printf("Error importing trades to portfolio %v: %v", portfolioID, err)
+				return err
+			}
+
+			logger.Printf("Imported %v trades to portfolio %v", len(result.InsertedIDs), portfolioID)
+			return stream.SendAndClose(&tradepb.ImportResponse{
+				NumImported: numTrades,
+			})
+		}
+		if err != nil {
+			logger.Printf("Error receiving on import stream: %v", err)
+			return err
+		}
+
+		trade := req.GetTrade()
+		trades = append(trades, trade)
+		portfolioID = req.GetPortfolioId()
+		numTrades++
+	}
+}
+
+// GetTradesByMarket returns a stream of trade objects that belong to a specified market
+func (*server) GetTradesByMarket(req *tradepb.GetTradesByMarketRequest, stream tradepb.TradeService_GetTradesByMarketServer) error {
+	market := req.GetMarket()
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.D{{Key: "market", Value: market}}
+
+	cursor, err := tradeCollection.Find(context.TODO(), filter)
+	if err != nil {
+		logger.Printf("Error querying database in GetTradesByMarket ( %v ): %v", market, err)
+		return err
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		var result tradepb.Trade
+		err = cursor.Decode(&result)
+
+		if err != nil {
+			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
+		}
+
+		sendErr := stream.Send(&tradepb.GetTradesByMarketResponse{
+			Trade: &result,
+		})
+		if sendErr != nil {
+			logger.Printf("Error returning trade: %v", err)
+		}
+	}
+	return nil
+}
+
+// GetTradesByDateRange returns a stream of trades within a specified date range
+func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, stream tradepb.TradeService_GetTradesByDateRangeServer) error {
+	startDate, err := time.Parse("2006-01-02T15:04:05", req.GetStartDate())
+	if err != nil {
+		logger.Printf("Error parsing startDate ( %v ) to timestamp: %v", startDate, err)
+		return err
+	}
+	endDate, err := time.Parse("2006-01-02T15:04:05", req.GetEndDate())
+	if err != nil {
+		logger.Printf("Error parsing endDate ( %v ) to timestamp: %v", endDate, err)
+		return err
+	}
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{"date": bson.M{"$gte": startDate.UnixNano()}},
+			bson.M{"date": bson.M{"$lt": endDate.UnixNano()}},
+		},
+	}
+
+	cursor, err := tradeCollection.Find(context.Background(), filter)
+	if err != nil {
+		logger.Printf("Error querying database in GetTradesByDateRange ( %v , %v ): %v", startDate, endDate, err)
+		return err
+	}
+	defer cursor.Close(context.Background())
+
+	var result tradepb.Trade
+	for cursor.Next(context.Background()) {
+		err = cursor.Decode(&result)
+		if err != nil {
+			logger.Printf("Error decoding trade in portfolio %v: %v", portfolioID, err)
+		}
+
+		sendErr := stream.Send(&tradepb.GetTradesByDateRangeResponse{
+			Trade: &result,
+		})
+		if sendErr != nil {
+			logger.Printf("Error returning trade: %v", err)
+		}
+	}
+	return nil
+}
+
+// rowify parses a trade into a string that represents a csv row
+func rowify(trade *tradepb.Trade) []string {
+	val := reflect.Indirect(reflect.ValueOf(trade))
+	row := []string{}
+
+	// skip _id and fields generated by protoc
+	for i := 1; i < val.NumField()-3; i++ {
+		elem := val.Field(i)
+		row = append(row, fmt.Sprintf("%v", elem))
+	}
+	return row
 }

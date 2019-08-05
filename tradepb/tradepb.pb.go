@@ -67,7 +67,7 @@ type Trade struct {
 	// @inject_tag: bson:"fiat_ind"
 	FiatInd bool `protobuf:"varint,8,opt,name=fiat_ind,json=fiatInd,proto3" json:"fiat_ind,omitempty" bson:"fiat_ind"`
 	// @inject_tag: bson:"date"
-	Date                 string   `protobuf:"bytes,9,opt,name=date,proto3" json:"date,omitempty" bson:"date"`
+	Date                 int64    `protobuf:"varint,9,opt,name=date,proto3" json:"date,omitempty" bson:"date"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -154,11 +154,11 @@ func (m *Trade) GetFiatInd() bool {
 	return false
 }
 
-func (m *Trade) GetDate() string {
+func (m *Trade) GetDate() int64 {
 	if m != nil {
 		return m.Date
 	}
-	return ""
+	return 0
 }
 
 type AddTradeRequest struct {
@@ -513,6 +513,436 @@ func (m *GetTradeResponse) GetTrade() *Trade {
 	return nil
 }
 
+type GetTradesByMarketRequest struct {
+	Market               string   `protobuf:"bytes,1,opt,name=market,proto3" json:"market,omitempty"`
+	PortfolioId          int32    `protobuf:"varint,2,opt,name=portfolioId,proto3" json:"portfolioId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTradesByMarketRequest) Reset()         { *m = GetTradesByMarketRequest{} }
+func (m *GetTradesByMarketRequest) String() string { return proto.CompactTextString(m) }
+func (*GetTradesByMarketRequest) ProtoMessage()    {}
+func (*GetTradesByMarketRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{9}
+}
+
+func (m *GetTradesByMarketRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTradesByMarketRequest.Unmarshal(m, b)
+}
+func (m *GetTradesByMarketRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTradesByMarketRequest.Marshal(b, m, deterministic)
+}
+func (m *GetTradesByMarketRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTradesByMarketRequest.Merge(m, src)
+}
+func (m *GetTradesByMarketRequest) XXX_Size() int {
+	return xxx_messageInfo_GetTradesByMarketRequest.Size(m)
+}
+func (m *GetTradesByMarketRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTradesByMarketRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTradesByMarketRequest proto.InternalMessageInfo
+
+func (m *GetTradesByMarketRequest) GetMarket() string {
+	if m != nil {
+		return m.Market
+	}
+	return ""
+}
+
+func (m *GetTradesByMarketRequest) GetPortfolioId() int32 {
+	if m != nil {
+		return m.PortfolioId
+	}
+	return 0
+}
+
+type GetTradesByMarketResponse struct {
+	Trade                *Trade   `protobuf:"bytes,1,opt,name=trade,proto3" json:"trade,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTradesByMarketResponse) Reset()         { *m = GetTradesByMarketResponse{} }
+func (m *GetTradesByMarketResponse) String() string { return proto.CompactTextString(m) }
+func (*GetTradesByMarketResponse) ProtoMessage()    {}
+func (*GetTradesByMarketResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{10}
+}
+
+func (m *GetTradesByMarketResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTradesByMarketResponse.Unmarshal(m, b)
+}
+func (m *GetTradesByMarketResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTradesByMarketResponse.Marshal(b, m, deterministic)
+}
+func (m *GetTradesByMarketResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTradesByMarketResponse.Merge(m, src)
+}
+func (m *GetTradesByMarketResponse) XXX_Size() int {
+	return xxx_messageInfo_GetTradesByMarketResponse.Size(m)
+}
+func (m *GetTradesByMarketResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTradesByMarketResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTradesByMarketResponse proto.InternalMessageInfo
+
+func (m *GetTradesByMarketResponse) GetTrade() *Trade {
+	if m != nil {
+		return m.Trade
+	}
+	return nil
+}
+
+type GetTradesByDateRangeRequest struct {
+	StartDate            string   `protobuf:"bytes,1,opt,name=start_date,json=startDate,proto3" json:"start_date,omitempty"`
+	EndDate              string   `protobuf:"bytes,2,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
+	PortfolioId          int32    `protobuf:"varint,3,opt,name=portfolioId,proto3" json:"portfolioId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTradesByDateRangeRequest) Reset()         { *m = GetTradesByDateRangeRequest{} }
+func (m *GetTradesByDateRangeRequest) String() string { return proto.CompactTextString(m) }
+func (*GetTradesByDateRangeRequest) ProtoMessage()    {}
+func (*GetTradesByDateRangeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{11}
+}
+
+func (m *GetTradesByDateRangeRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTradesByDateRangeRequest.Unmarshal(m, b)
+}
+func (m *GetTradesByDateRangeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTradesByDateRangeRequest.Marshal(b, m, deterministic)
+}
+func (m *GetTradesByDateRangeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTradesByDateRangeRequest.Merge(m, src)
+}
+func (m *GetTradesByDateRangeRequest) XXX_Size() int {
+	return xxx_messageInfo_GetTradesByDateRangeRequest.Size(m)
+}
+func (m *GetTradesByDateRangeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTradesByDateRangeRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTradesByDateRangeRequest proto.InternalMessageInfo
+
+func (m *GetTradesByDateRangeRequest) GetStartDate() string {
+	if m != nil {
+		return m.StartDate
+	}
+	return ""
+}
+
+func (m *GetTradesByDateRangeRequest) GetEndDate() string {
+	if m != nil {
+		return m.EndDate
+	}
+	return ""
+}
+
+func (m *GetTradesByDateRangeRequest) GetPortfolioId() int32 {
+	if m != nil {
+		return m.PortfolioId
+	}
+	return 0
+}
+
+type GetTradesByDateRangeResponse struct {
+	Trade                *Trade   `protobuf:"bytes,1,opt,name=trade,proto3" json:"trade,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetTradesByDateRangeResponse) Reset()         { *m = GetTradesByDateRangeResponse{} }
+func (m *GetTradesByDateRangeResponse) String() string { return proto.CompactTextString(m) }
+func (*GetTradesByDateRangeResponse) ProtoMessage()    {}
+func (*GetTradesByDateRangeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{12}
+}
+
+func (m *GetTradesByDateRangeResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetTradesByDateRangeResponse.Unmarshal(m, b)
+}
+func (m *GetTradesByDateRangeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetTradesByDateRangeResponse.Marshal(b, m, deterministic)
+}
+func (m *GetTradesByDateRangeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetTradesByDateRangeResponse.Merge(m, src)
+}
+func (m *GetTradesByDateRangeResponse) XXX_Size() int {
+	return xxx_messageInfo_GetTradesByDateRangeResponse.Size(m)
+}
+func (m *GetTradesByDateRangeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetTradesByDateRangeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetTradesByDateRangeResponse proto.InternalMessageInfo
+
+func (m *GetTradesByDateRangeResponse) GetTrade() *Trade {
+	if m != nil {
+		return m.Trade
+	}
+	return nil
+}
+
+type GetAllTradesRequest struct {
+	PortfolioId          int32    `protobuf:"varint,1,opt,name=portfolioId,proto3" json:"portfolioId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetAllTradesRequest) Reset()         { *m = GetAllTradesRequest{} }
+func (m *GetAllTradesRequest) String() string { return proto.CompactTextString(m) }
+func (*GetAllTradesRequest) ProtoMessage()    {}
+func (*GetAllTradesRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{13}
+}
+
+func (m *GetAllTradesRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAllTradesRequest.Unmarshal(m, b)
+}
+func (m *GetAllTradesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAllTradesRequest.Marshal(b, m, deterministic)
+}
+func (m *GetAllTradesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllTradesRequest.Merge(m, src)
+}
+func (m *GetAllTradesRequest) XXX_Size() int {
+	return xxx_messageInfo_GetAllTradesRequest.Size(m)
+}
+func (m *GetAllTradesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllTradesRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllTradesRequest proto.InternalMessageInfo
+
+func (m *GetAllTradesRequest) GetPortfolioId() int32 {
+	if m != nil {
+		return m.PortfolioId
+	}
+	return 0
+}
+
+type GetAllTradesResponse struct {
+	Trade                *Trade   `protobuf:"bytes,1,opt,name=trade,proto3" json:"trade,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetAllTradesResponse) Reset()         { *m = GetAllTradesResponse{} }
+func (m *GetAllTradesResponse) String() string { return proto.CompactTextString(m) }
+func (*GetAllTradesResponse) ProtoMessage()    {}
+func (*GetAllTradesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{14}
+}
+
+func (m *GetAllTradesResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAllTradesResponse.Unmarshal(m, b)
+}
+func (m *GetAllTradesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAllTradesResponse.Marshal(b, m, deterministic)
+}
+func (m *GetAllTradesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAllTradesResponse.Merge(m, src)
+}
+func (m *GetAllTradesResponse) XXX_Size() int {
+	return xxx_messageInfo_GetAllTradesResponse.Size(m)
+}
+func (m *GetAllTradesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAllTradesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAllTradesResponse proto.InternalMessageInfo
+
+func (m *GetAllTradesResponse) GetTrade() *Trade {
+	if m != nil {
+		return m.Trade
+	}
+	return nil
+}
+
+type ExportRequest struct {
+	Trade                *Trade   `protobuf:"bytes,1,opt,name=trade,proto3" json:"trade,omitempty"`
+	PortfolioId          int32    `protobuf:"varint,2,opt,name=portfolioId,proto3" json:"portfolioId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ExportRequest) Reset()         { *m = ExportRequest{} }
+func (m *ExportRequest) String() string { return proto.CompactTextString(m) }
+func (*ExportRequest) ProtoMessage()    {}
+func (*ExportRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{15}
+}
+
+func (m *ExportRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ExportRequest.Unmarshal(m, b)
+}
+func (m *ExportRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ExportRequest.Marshal(b, m, deterministic)
+}
+func (m *ExportRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ExportRequest.Merge(m, src)
+}
+func (m *ExportRequest) XXX_Size() int {
+	return xxx_messageInfo_ExportRequest.Size(m)
+}
+func (m *ExportRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ExportRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ExportRequest proto.InternalMessageInfo
+
+func (m *ExportRequest) GetTrade() *Trade {
+	if m != nil {
+		return m.Trade
+	}
+	return nil
+}
+
+func (m *ExportRequest) GetPortfolioId() int32 {
+	if m != nil {
+		return m.PortfolioId
+	}
+	return 0
+}
+
+type ExportResponse struct {
+	NumTrades            int32    `protobuf:"varint,1,opt,name=numTrades,proto3" json:"numTrades,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ExportResponse) Reset()         { *m = ExportResponse{} }
+func (m *ExportResponse) String() string { return proto.CompactTextString(m) }
+func (*ExportResponse) ProtoMessage()    {}
+func (*ExportResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{16}
+}
+
+func (m *ExportResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ExportResponse.Unmarshal(m, b)
+}
+func (m *ExportResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ExportResponse.Marshal(b, m, deterministic)
+}
+func (m *ExportResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ExportResponse.Merge(m, src)
+}
+func (m *ExportResponse) XXX_Size() int {
+	return xxx_messageInfo_ExportResponse.Size(m)
+}
+func (m *ExportResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ExportResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ExportResponse proto.InternalMessageInfo
+
+func (m *ExportResponse) GetNumTrades() int32 {
+	if m != nil {
+		return m.NumTrades
+	}
+	return 0
+}
+
+type ImportRequest struct {
+	Trade                *Trade   `protobuf:"bytes,1,opt,name=trade,proto3" json:"trade,omitempty"`
+	PortfolioId          int32    `protobuf:"varint,2,opt,name=portfolioId,proto3" json:"portfolioId,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ImportRequest) Reset()         { *m = ImportRequest{} }
+func (m *ImportRequest) String() string { return proto.CompactTextString(m) }
+func (*ImportRequest) ProtoMessage()    {}
+func (*ImportRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{17}
+}
+
+func (m *ImportRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ImportRequest.Unmarshal(m, b)
+}
+func (m *ImportRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ImportRequest.Marshal(b, m, deterministic)
+}
+func (m *ImportRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ImportRequest.Merge(m, src)
+}
+func (m *ImportRequest) XXX_Size() int {
+	return xxx_messageInfo_ImportRequest.Size(m)
+}
+func (m *ImportRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ImportRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ImportRequest proto.InternalMessageInfo
+
+func (m *ImportRequest) GetTrade() *Trade {
+	if m != nil {
+		return m.Trade
+	}
+	return nil
+}
+
+func (m *ImportRequest) GetPortfolioId() int32 {
+	if m != nil {
+		return m.PortfolioId
+	}
+	return 0
+}
+
+type ImportResponse struct {
+	NumImported          int32    `protobuf:"varint,1,opt,name=numImported,proto3" json:"numImported,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ImportResponse) Reset()         { *m = ImportResponse{} }
+func (m *ImportResponse) String() string { return proto.CompactTextString(m) }
+func (*ImportResponse) ProtoMessage()    {}
+func (*ImportResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c05b0caf8a109112, []int{18}
+}
+
+func (m *ImportResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ImportResponse.Unmarshal(m, b)
+}
+func (m *ImportResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ImportResponse.Marshal(b, m, deterministic)
+}
+func (m *ImportResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ImportResponse.Merge(m, src)
+}
+func (m *ImportResponse) XXX_Size() int {
+	return xxx_messageInfo_ImportResponse.Size(m)
+}
+func (m *ImportResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ImportResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ImportResponse proto.InternalMessageInfo
+
+func (m *ImportResponse) GetNumImported() int32 {
+	if m != nil {
+		return m.NumImported
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterEnum("trade.Trade_Type", Trade_Type_name, Trade_Type_value)
 	proto.RegisterType((*Trade)(nil), "trade.Trade")
@@ -524,42 +954,67 @@ func init() {
 	proto.RegisterType((*UpdateTradeResponse)(nil), "trade.UpdateTradeResponse")
 	proto.RegisterType((*GetTradeRequest)(nil), "trade.GetTradeRequest")
 	proto.RegisterType((*GetTradeResponse)(nil), "trade.GetTradeResponse")
+	proto.RegisterType((*GetTradesByMarketRequest)(nil), "trade.GetTradesByMarketRequest")
+	proto.RegisterType((*GetTradesByMarketResponse)(nil), "trade.GetTradesByMarketResponse")
+	proto.RegisterType((*GetTradesByDateRangeRequest)(nil), "trade.GetTradesByDateRangeRequest")
+	proto.RegisterType((*GetTradesByDateRangeResponse)(nil), "trade.GetTradesByDateRangeResponse")
+	proto.RegisterType((*GetAllTradesRequest)(nil), "trade.GetAllTradesRequest")
+	proto.RegisterType((*GetAllTradesResponse)(nil), "trade.GetAllTradesResponse")
+	proto.RegisterType((*ExportRequest)(nil), "trade.ExportRequest")
+	proto.RegisterType((*ExportResponse)(nil), "trade.ExportResponse")
+	proto.RegisterType((*ImportRequest)(nil), "trade.ImportRequest")
+	proto.RegisterType((*ImportResponse)(nil), "trade.ImportResponse")
 }
 
 func init() { proto.RegisterFile("tradepb.proto", fileDescriptor_c05b0caf8a109112) }
 
 var fileDescriptor_c05b0caf8a109112 = []byte{
-	// 475 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0xcf, 0x8b, 0xd3, 0x40,
-	0x14, 0xc7, 0x9b, 0x26, 0x69, 0xd2, 0xd7, 0xae, 0x8d, 0x6f, 0x65, 0x9d, 0xf6, 0x14, 0x06, 0x85,
-	0x1e, 0xa4, 0x87, 0x0a, 0x82, 0x88, 0x07, 0xd7, 0x5f, 0x14, 0x56, 0x90, 0xec, 0x2e, 0xa2, 0x97,
-	0x25, 0xeb, 0x4c, 0x21, 0xd8, 0x76, 0xc6, 0x74, 0x56, 0xd8, 0xff, 0xc5, 0xff, 0xd3, 0xab, 0xcc,
-	0x4b, 0x9a, 0x26, 0xed, 0x2e, 0x7a, 0xe8, 0x25, 0xcc, 0xfb, 0xce, 0xbc, 0x37, 0xdf, 0xf7, 0x99,
-	0x47, 0xe0, 0xc8, 0xe4, 0xa9, 0x90, 0xfa, 0x7a, 0xa2, 0x73, 0x65, 0x14, 0xfa, 0x14, 0xf2, 0x3f,
-	0x0e, 0xf8, 0x17, 0x76, 0x85, 0x03, 0x70, 0xaf, 0x32, 0xc1, 0x9c, 0xd8, 0x19, 0x77, 0x93, 0xf6,
-	0x4c, 0xe0, 0x53, 0xf0, 0xcc, 0xad, 0x96, 0xac, 0x1d, 0x3b, 0xe3, 0x07, 0xd3, 0x87, 0x13, 0x4a,
-	0x98, 0x5c, 0x14, 0xdf, 0x5b, 0x2d, 0x13, 0xda, 0xc6, 0x13, 0xe8, 0x2c, 0xd3, 0xfc, 0x87, 0x34,
-	0xcc, 0xa5, 0xd4, 0x32, 0xc2, 0x47, 0xe0, 0xeb, 0x3c, 0xfb, 0x2e, 0x99, 0x17, 0x3b, 0xe3, 0x76,
-	0x52, 0x04, 0xf6, 0x74, 0xba, 0x54, 0x37, 0x2b, 0xc3, 0x7c, 0x92, 0xcb, 0x08, 0x23, 0x70, 0xe7,
-	0x52, 0xb2, 0x0e, 0x89, 0x76, 0x69, 0xf3, 0x8d, 0x32, 0xe9, 0x82, 0x05, 0x45, 0x3e, 0x05, 0x38,
-	0x84, 0x70, 0x9e, 0xa5, 0xe6, 0x2a, 0x5b, 0x09, 0x16, 0xc6, 0xce, 0x38, 0x4c, 0x02, 0x1b, 0xcf,
-	0x56, 0x02, 0x11, 0x3c, 0x91, 0x1a, 0xc9, 0xba, 0x64, 0x83, 0xd6, 0x7c, 0x08, 0x9e, 0xb5, 0x8a,
-	0x01, 0xb8, 0xa7, 0x97, 0x5f, 0xa3, 0x16, 0x86, 0xe0, 0x9d, 0xbf, 0x3f, 0x3b, 0x8b, 0x1c, 0xfe,
-	0x05, 0x06, 0x6f, 0x84, 0xa0, 0x76, 0x12, 0xf9, 0xf3, 0x46, 0xae, 0x0d, 0x72, 0x28, 0xa8, 0x10,
-	0x84, 0xde, 0xb4, 0x5f, 0x6f, 0x39, 0x29, 0xb6, 0x30, 0x86, 0x9e, 0x56, 0xb9, 0x99, 0xab, 0x45,
-	0xa6, 0x66, 0x82, 0xe0, 0xf8, 0x49, 0x5d, 0xe2, 0xcf, 0x20, 0xda, 0x16, 0x5e, 0x6b, 0xb5, 0x5a,
-	0x4b, 0x64, 0x10, 0x50, 0xfa, 0x6c, 0x03, 0x78, 0x13, 0xf2, 0xcf, 0x80, 0xef, 0xe4, 0x42, 0x1a,
-	0xd9, 0x70, 0x72, 0xef, 0xf9, 0xff, 0xb8, 0xff, 0x25, 0x1c, 0x37, 0x2a, 0x96, 0x16, 0x38, 0xf4,
-	0x05, 0xc9, 0xe2, 0x2d, 0xf1, 0x77, 0x28, 0xb3, 0xa1, 0x71, 0x03, 0x78, 0xa9, 0x2d, 0xb8, 0x43,
-	0x99, 0xd9, 0x22, 0x75, 0xef, 0x45, 0xca, 0x5f, 0xc1, 0x71, 0xe3, 0xd6, 0xd2, 0xf0, 0x13, 0x38,
-	0x5a, 0x2a, 0x91, 0xcd, 0xb3, 0xa6, 0xe3, 0xa6, 0xc8, 0x3f, 0xc1, 0xe0, 0xa3, 0x34, 0x07, 0x83,
-	0xf7, 0x02, 0xa2, 0x6d, 0xb9, 0x8a, 0xdc, 0x3f, 0xc7, 0x62, 0xfa, 0xbb, 0x0d, 0x7d, 0x12, 0xce,
-	0x65, 0xfe, 0xcb, 0x0e, 0xfa, 0x6b, 0x08, 0x37, 0x53, 0x80, 0x27, 0x65, 0xc6, 0xce, 0xbc, 0x8d,
-	0x1e, 0xef, 0xe9, 0xc5, 0x8d, 0xbc, 0x85, 0x1f, 0xa0, 0x57, 0x7b, 0x44, 0x1c, 0x96, 0x27, 0xf7,
-	0x47, 0x65, 0x34, 0xba, 0x6b, 0xab, 0x5e, 0xa7, 0xc6, 0xb6, 0xaa, 0xb3, 0xff, 0xca, 0x55, 0x9d,
-	0x3b, 0x9e, 0x82, 0xb7, 0x6c, 0x3b, 0x1b, 0x2e, 0x55, 0x3b, 0x3b, 0xdc, 0xab, 0x76, 0x76, 0x01,
-	0xf2, 0xd6, 0x69, 0xf7, 0x5b, 0x50, 0xfe, 0x7e, 0xae, 0x3b, 0xf4, 0xff, 0x79, 0xfe, 0x37, 0x00,
-	0x00, 0xff, 0xff, 0x70, 0x70, 0xbc, 0xc5, 0x90, 0x04, 0x00, 0x00,
+	// 719 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xdf, 0x6b, 0x13, 0x41,
+	0x10, 0xce, 0xe5, 0x77, 0x26, 0x69, 0x9b, 0x4e, 0x6b, 0xbd, 0x5c, 0x2b, 0x1e, 0xab, 0x42, 0x1e,
+	0x24, 0x48, 0x04, 0xa5, 0x8a, 0x48, 0x63, 0x6b, 0x09, 0xb6, 0x20, 0xd7, 0x16, 0xb1, 0x2f, 0xe5,
+	0xda, 0xdd, 0xc8, 0x61, 0x72, 0x77, 0x5e, 0x36, 0x62, 0xfe, 0x1b, 0xff, 0x4b, 0x5f, 0x65, 0x77,
+	0xef, 0x2e, 0xf7, 0x23, 0xb5, 0x16, 0xf2, 0x12, 0x6e, 0x66, 0xe7, 0xfb, 0xe6, 0xdb, 0x8f, 0x9d,
+	0x21, 0xb0, 0xc6, 0x03, 0x9b, 0x32, 0xff, 0xba, 0xe7, 0x07, 0x1e, 0xf7, 0xb0, 0x22, 0x43, 0xf2,
+	0x47, 0x83, 0xca, 0xb9, 0xf8, 0xc2, 0x0d, 0x28, 0x5d, 0x39, 0x54, 0xd7, 0x4c, 0xad, 0xdb, 0xb0,
+	0x8a, 0x43, 0x8a, 0xcf, 0xa0, 0xcc, 0xe7, 0x3e, 0xd3, 0x8b, 0xa6, 0xd6, 0x5d, 0xef, 0x6f, 0xf6,
+	0x24, 0xa0, 0x77, 0xae, 0x7e, 0xe7, 0x3e, 0xb3, 0xe4, 0x31, 0xee, 0x40, 0x75, 0x62, 0x07, 0xdf,
+	0x19, 0xd7, 0x4b, 0x12, 0x1a, 0x46, 0xb8, 0x0d, 0x15, 0x3f, 0x70, 0x6e, 0x98, 0x5e, 0x36, 0xb5,
+	0x6e, 0xd1, 0x52, 0x81, 0xa8, 0xb6, 0x27, 0xde, 0xcc, 0xe5, 0x7a, 0x45, 0xa6, 0xc3, 0x08, 0xdb,
+	0x50, 0x1a, 0x31, 0xa6, 0x57, 0x65, 0x52, 0x7c, 0x0a, 0x3c, 0xf7, 0xb8, 0x3d, 0xd6, 0x6b, 0x0a,
+	0x2f, 0x03, 0xec, 0x40, 0x7d, 0xe4, 0xd8, 0xfc, 0xca, 0x71, 0xa9, 0x5e, 0x37, 0xb5, 0x6e, 0xdd,
+	0xaa, 0x89, 0x78, 0xe8, 0x52, 0x44, 0x28, 0x53, 0x9b, 0x33, 0xbd, 0x61, 0x6a, 0xdd, 0x92, 0x25,
+	0xbf, 0x49, 0x07, 0xca, 0x42, 0x2a, 0xd6, 0xa0, 0x34, 0xb8, 0xf8, 0xda, 0x2e, 0x60, 0x1d, 0xca,
+	0x67, 0x47, 0x27, 0x27, 0x6d, 0x8d, 0x7c, 0x81, 0x8d, 0x03, 0x4a, 0xe5, 0x75, 0x2c, 0xf6, 0x63,
+	0xc6, 0xa6, 0x1c, 0x09, 0x28, 0x57, 0xa4, 0x09, 0xcd, 0x7e, 0x2b, 0x79, 0x65, 0x4b, 0x1d, 0xa1,
+	0x09, 0x4d, 0xdf, 0x0b, 0xf8, 0xc8, 0x1b, 0x3b, 0xde, 0x90, 0x4a, 0x73, 0x2a, 0x56, 0x32, 0x45,
+	0x9e, 0x43, 0x7b, 0x41, 0x3c, 0xf5, 0x3d, 0x77, 0xca, 0x50, 0x87, 0x9a, 0x84, 0x0f, 0x23, 0x83,
+	0xa3, 0x90, 0x7c, 0x06, 0x3c, 0x64, 0x63, 0xc6, 0x59, 0x4a, 0xc9, 0xad, 0xf5, 0xff, 0xd1, 0x7f,
+	0x1f, 0xb6, 0x52, 0x8c, 0xa1, 0x04, 0x02, 0x2d, 0x2a, 0xd3, 0xf4, 0x83, 0xf4, 0x5f, 0x93, 0xc8,
+	0x54, 0x8e, 0x70, 0xc0, 0x0b, 0x5f, 0x18, 0xb7, 0x2a, 0x31, 0x0b, 0x4b, 0x4b, 0xb7, 0x5a, 0x4a,
+	0xde, 0xc2, 0x56, 0xaa, 0x6b, 0x28, 0xf8, 0x29, 0xac, 0x4d, 0x3c, 0xea, 0x8c, 0x9c, 0xb4, 0xe2,
+	0x74, 0x92, 0x9c, 0xc2, 0xc6, 0x31, 0xe3, 0x2b, 0x33, 0xef, 0x15, 0xb4, 0x17, 0x74, 0xb1, 0x73,
+	0x77, 0x3e, 0x0b, 0x72, 0x0e, 0x7a, 0x84, 0x9b, 0x0e, 0xe6, 0xa7, 0x72, 0x04, 0x22, 0x3d, 0x8b,
+	0x09, 0xd1, 0x52, 0x13, 0x72, 0xb7, 0x9a, 0xf7, 0xd0, 0x59, 0xc2, 0x7a, 0x0f, 0x59, 0x73, 0xd8,
+	0x4d, 0x10, 0x1c, 0xda, 0x9c, 0x59, 0xb6, 0xfb, 0x2d, 0x76, 0xea, 0x11, 0xc0, 0x94, 0xdb, 0x01,
+	0xbf, 0x92, 0x83, 0xa3, 0xd4, 0x35, 0x64, 0x46, 0x94, 0x8a, 0x61, 0x63, 0x2e, 0x55, 0x87, 0x45,
+	0xe5, 0x24, 0x73, 0xa9, 0x3c, 0xca, 0x68, 0x2f, 0xe5, 0xb5, 0x0f, 0x60, 0x6f, 0x79, 0xeb, 0x7b,
+	0xc8, 0x7f, 0x0d, 0x5b, 0xc7, 0x8c, 0x1f, 0x8c, 0xc7, 0x8a, 0x26, 0x92, 0x9d, 0x69, 0xae, 0xe5,
+	0x9b, 0xbf, 0x81, 0xed, 0x34, 0xf0, 0x1e, 0x4d, 0x2f, 0x60, 0xed, 0xe8, 0x97, 0x20, 0x5b, 0xed,
+	0x5a, 0xe8, 0xc1, 0x7a, 0x44, 0x1b, 0x8a, 0xd9, 0x83, 0x86, 0x3b, 0x9b, 0x28, 0x85, 0xe1, 0x25,
+	0x16, 0x09, 0x21, 0x63, 0x38, 0x59, 0xbd, 0x8c, 0x3e, 0xac, 0x47, 0xb4, 0xa1, 0x0c, 0x13, 0x9a,
+	0xee, 0x6c, 0xa2, 0x92, 0x2c, 0x76, 0x33, 0x91, 0xea, 0xff, 0xae, 0x40, 0x4b, 0xb6, 0x39, 0x63,
+	0xc1, 0x4f, 0xb1, 0xc5, 0xdf, 0x41, 0x3d, 0x5a, 0x71, 0xb8, 0x13, 0xea, 0xc8, 0x2c, 0x53, 0xe3,
+	0x61, 0x2e, 0xaf, 0xfa, 0x91, 0x02, 0x7e, 0x84, 0x66, 0x62, 0x43, 0x61, 0x27, 0xac, 0xcc, 0xef,
+	0x41, 0xc3, 0x58, 0x76, 0x94, 0xe4, 0x49, 0x2c, 0x8e, 0x98, 0x27, 0xbf, 0xc2, 0x62, 0x9e, 0x25,
+	0x7b, 0x86, 0x14, 0xc4, 0x75, 0xa2, 0xa7, 0x1a, 0x5f, 0x27, 0xb3, 0x54, 0xe2, 0xeb, 0x64, 0xb7,
+	0x03, 0x29, 0xe0, 0x25, 0x6c, 0xe6, 0xa6, 0x14, 0x1f, 0x67, 0xea, 0xb3, 0x5b, 0xc1, 0x30, 0x6f,
+	0x2f, 0x88, 0x98, 0x5f, 0x68, 0x78, 0x23, 0x1f, 0x72, 0x6e, 0x8a, 0x90, 0xe4, 0xd1, 0xd9, 0xe9,
+	0x36, 0x9e, 0xfc, 0xb3, 0x26, 0xd1, 0xe4, 0x13, 0xb4, 0x92, 0xd3, 0x82, 0xc6, 0x02, 0x98, 0x9d,
+	0x3d, 0x63, 0x77, 0xe9, 0x59, 0x82, 0x6c, 0x1f, 0xaa, 0xea, 0x9d, 0xe3, 0x76, 0x58, 0x9a, 0x9a,
+	0x26, 0xe3, 0x41, 0x26, 0x1b, 0x41, 0xbb, 0x12, 0xaa, 0xde, 0x5c, 0x0c, 0x4d, 0x4d, 0x40, 0x0c,
+	0x4d, 0x3f, 0x60, 0x01, 0x1d, 0x34, 0x2e, 0x6b, 0xe1, 0xff, 0x9b, 0xeb, 0xaa, 0xfc, 0x83, 0xf3,
+	0xf2, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x61, 0x5a, 0xae, 0xf8, 0xf1, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -578,6 +1033,11 @@ type TradeServiceClient interface {
 	DeleteTrade(ctx context.Context, in *DeleteTradeRequest, opts ...grpc.CallOption) (*DeleteTradeResponse, error)
 	UpdateTrade(ctx context.Context, in *UpdateTradeRequest, opts ...grpc.CallOption) (*UpdateTradeResponse, error)
 	GetTrade(ctx context.Context, in *GetTradeRequest, opts ...grpc.CallOption) (*GetTradeResponse, error)
+	GetTradesByMarket(ctx context.Context, in *GetTradesByMarketRequest, opts ...grpc.CallOption) (TradeService_GetTradesByMarketClient, error)
+	GetTradesByDateRange(ctx context.Context, in *GetTradesByDateRangeRequest, opts ...grpc.CallOption) (TradeService_GetTradesByDateRangeClient, error)
+	GetAllTrades(ctx context.Context, in *GetAllTradesRequest, opts ...grpc.CallOption) (TradeService_GetAllTradesClient, error)
+	Export(ctx context.Context, opts ...grpc.CallOption) (TradeService_ExportClient, error)
+	Import(ctx context.Context, opts ...grpc.CallOption) (TradeService_ImportClient, error)
 }
 
 type tradeServiceClient struct {
@@ -624,12 +1084,181 @@ func (c *tradeServiceClient) GetTrade(ctx context.Context, in *GetTradeRequest, 
 	return out, nil
 }
 
+func (c *tradeServiceClient) GetTradesByMarket(ctx context.Context, in *GetTradesByMarketRequest, opts ...grpc.CallOption) (TradeService_GetTradesByMarketClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TradeService_serviceDesc.Streams[0], "/trade.TradeService/GetTradesByMarket", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tradeServiceGetTradesByMarketClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TradeService_GetTradesByMarketClient interface {
+	Recv() (*GetTradesByMarketResponse, error)
+	grpc.ClientStream
+}
+
+type tradeServiceGetTradesByMarketClient struct {
+	grpc.ClientStream
+}
+
+func (x *tradeServiceGetTradesByMarketClient) Recv() (*GetTradesByMarketResponse, error) {
+	m := new(GetTradesByMarketResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *tradeServiceClient) GetTradesByDateRange(ctx context.Context, in *GetTradesByDateRangeRequest, opts ...grpc.CallOption) (TradeService_GetTradesByDateRangeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TradeService_serviceDesc.Streams[1], "/trade.TradeService/GetTradesByDateRange", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tradeServiceGetTradesByDateRangeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TradeService_GetTradesByDateRangeClient interface {
+	Recv() (*GetTradesByDateRangeResponse, error)
+	grpc.ClientStream
+}
+
+type tradeServiceGetTradesByDateRangeClient struct {
+	grpc.ClientStream
+}
+
+func (x *tradeServiceGetTradesByDateRangeClient) Recv() (*GetTradesByDateRangeResponse, error) {
+	m := new(GetTradesByDateRangeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *tradeServiceClient) GetAllTrades(ctx context.Context, in *GetAllTradesRequest, opts ...grpc.CallOption) (TradeService_GetAllTradesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TradeService_serviceDesc.Streams[2], "/trade.TradeService/GetAllTrades", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tradeServiceGetAllTradesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type TradeService_GetAllTradesClient interface {
+	Recv() (*GetAllTradesResponse, error)
+	grpc.ClientStream
+}
+
+type tradeServiceGetAllTradesClient struct {
+	grpc.ClientStream
+}
+
+func (x *tradeServiceGetAllTradesClient) Recv() (*GetAllTradesResponse, error) {
+	m := new(GetAllTradesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *tradeServiceClient) Export(ctx context.Context, opts ...grpc.CallOption) (TradeService_ExportClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TradeService_serviceDesc.Streams[3], "/trade.TradeService/Export", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tradeServiceExportClient{stream}
+	return x, nil
+}
+
+type TradeService_ExportClient interface {
+	Send(*ExportRequest) error
+	CloseAndRecv() (*ExportResponse, error)
+	grpc.ClientStream
+}
+
+type tradeServiceExportClient struct {
+	grpc.ClientStream
+}
+
+func (x *tradeServiceExportClient) Send(m *ExportRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *tradeServiceExportClient) CloseAndRecv() (*ExportResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(ExportResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *tradeServiceClient) Import(ctx context.Context, opts ...grpc.CallOption) (TradeService_ImportClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_TradeService_serviceDesc.Streams[4], "/trade.TradeService/Import", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &tradeServiceImportClient{stream}
+	return x, nil
+}
+
+type TradeService_ImportClient interface {
+	Send(*ImportRequest) error
+	CloseAndRecv() (*ImportResponse, error)
+	grpc.ClientStream
+}
+
+type tradeServiceImportClient struct {
+	grpc.ClientStream
+}
+
+func (x *tradeServiceImportClient) Send(m *ImportRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *tradeServiceImportClient) CloseAndRecv() (*ImportResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(ImportResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // TradeServiceServer is the server API for TradeService service.
 type TradeServiceServer interface {
 	AddTrade(context.Context, *AddTradeRequest) (*AddTradeResponse, error)
 	DeleteTrade(context.Context, *DeleteTradeRequest) (*DeleteTradeResponse, error)
 	UpdateTrade(context.Context, *UpdateTradeRequest) (*UpdateTradeResponse, error)
 	GetTrade(context.Context, *GetTradeRequest) (*GetTradeResponse, error)
+	GetTradesByMarket(*GetTradesByMarketRequest, TradeService_GetTradesByMarketServer) error
+	GetTradesByDateRange(*GetTradesByDateRangeRequest, TradeService_GetTradesByDateRangeServer) error
+	GetAllTrades(*GetAllTradesRequest, TradeService_GetAllTradesServer) error
+	Export(TradeService_ExportServer) error
+	Import(TradeService_ImportServer) error
 }
 
 // UnimplementedTradeServiceServer can be embedded to have forward compatible implementations.
@@ -647,6 +1276,21 @@ func (*UnimplementedTradeServiceServer) UpdateTrade(ctx context.Context, req *Up
 }
 func (*UnimplementedTradeServiceServer) GetTrade(ctx context.Context, req *GetTradeRequest) (*GetTradeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetTrade not implemented")
+}
+func (*UnimplementedTradeServiceServer) GetTradesByMarket(req *GetTradesByMarketRequest, srv TradeService_GetTradesByMarketServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetTradesByMarket not implemented")
+}
+func (*UnimplementedTradeServiceServer) GetTradesByDateRange(req *GetTradesByDateRangeRequest, srv TradeService_GetTradesByDateRangeServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetTradesByDateRange not implemented")
+}
+func (*UnimplementedTradeServiceServer) GetAllTrades(req *GetAllTradesRequest, srv TradeService_GetAllTradesServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetAllTrades not implemented")
+}
+func (*UnimplementedTradeServiceServer) Export(srv TradeService_ExportServer) error {
+	return status.Errorf(codes.Unimplemented, "method Export not implemented")
+}
+func (*UnimplementedTradeServiceServer) Import(srv TradeService_ImportServer) error {
+	return status.Errorf(codes.Unimplemented, "method Import not implemented")
 }
 
 func RegisterTradeServiceServer(s *grpc.Server, srv TradeServiceServer) {
@@ -725,6 +1369,121 @@ func _TradeService_GetTrade_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TradeService_GetTradesByMarket_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetTradesByMarketRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TradeServiceServer).GetTradesByMarket(m, &tradeServiceGetTradesByMarketServer{stream})
+}
+
+type TradeService_GetTradesByMarketServer interface {
+	Send(*GetTradesByMarketResponse) error
+	grpc.ServerStream
+}
+
+type tradeServiceGetTradesByMarketServer struct {
+	grpc.ServerStream
+}
+
+func (x *tradeServiceGetTradesByMarketServer) Send(m *GetTradesByMarketResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _TradeService_GetTradesByDateRange_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetTradesByDateRangeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TradeServiceServer).GetTradesByDateRange(m, &tradeServiceGetTradesByDateRangeServer{stream})
+}
+
+type TradeService_GetTradesByDateRangeServer interface {
+	Send(*GetTradesByDateRangeResponse) error
+	grpc.ServerStream
+}
+
+type tradeServiceGetTradesByDateRangeServer struct {
+	grpc.ServerStream
+}
+
+func (x *tradeServiceGetTradesByDateRangeServer) Send(m *GetTradesByDateRangeResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _TradeService_GetAllTrades_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetAllTradesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TradeServiceServer).GetAllTrades(m, &tradeServiceGetAllTradesServer{stream})
+}
+
+type TradeService_GetAllTradesServer interface {
+	Send(*GetAllTradesResponse) error
+	grpc.ServerStream
+}
+
+type tradeServiceGetAllTradesServer struct {
+	grpc.ServerStream
+}
+
+func (x *tradeServiceGetAllTradesServer) Send(m *GetAllTradesResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _TradeService_Export_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TradeServiceServer).Export(&tradeServiceExportServer{stream})
+}
+
+type TradeService_ExportServer interface {
+	SendAndClose(*ExportResponse) error
+	Recv() (*ExportRequest, error)
+	grpc.ServerStream
+}
+
+type tradeServiceExportServer struct {
+	grpc.ServerStream
+}
+
+func (x *tradeServiceExportServer) SendAndClose(m *ExportResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *tradeServiceExportServer) Recv() (*ExportRequest, error) {
+	m := new(ExportRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _TradeService_Import_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(TradeServiceServer).Import(&tradeServiceImportServer{stream})
+}
+
+type TradeService_ImportServer interface {
+	SendAndClose(*ImportResponse) error
+	Recv() (*ImportRequest, error)
+	grpc.ServerStream
+}
+
+type tradeServiceImportServer struct {
+	grpc.ServerStream
+}
+
+func (x *tradeServiceImportServer) SendAndClose(m *ImportResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *tradeServiceImportServer) Recv() (*ImportRequest, error) {
+	m := new(ImportRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 var _TradeService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "trade.TradeService",
 	HandlerType: (*TradeServiceServer)(nil),
@@ -746,6 +1505,32 @@ var _TradeService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _TradeService_GetTrade_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "GetTradesByMarket",
+			Handler:       _TradeService_GetTradesByMarket_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetTradesByDateRange",
+			Handler:       _TradeService_GetTradesByDateRange_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "GetAllTrades",
+			Handler:       _TradeService_GetAllTrades_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "Export",
+			Handler:       _TradeService_Export_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Import",
+			Handler:       _TradeService_Import_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "tradepb.proto",
 }
