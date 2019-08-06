@@ -213,8 +213,13 @@ func (*server) Export(stream tradepb.TradeService_ExportServer) error {
 		logger.Printf("Error opening export file: %v", err)
 		return err
 	}
+	defer csvfile.Close()
 
 	csvwriter := csv.NewWriter(csvfile)
+	if err := csvwriter.Write(getHeaders()); err != nil {
+		logger.Printf("Error writing headers to csv: %v", err)
+		return err
+	}
 	tradeCount := int32(0)
 	for {
 		trade, err := stream.Recv()
@@ -361,4 +366,20 @@ func rowify(trade *tradepb.Trade) []string {
 		row = append(row, fmt.Sprintf("%v", elem))
 	}
 	return row
+}
+
+// getHeaders returns a slice oh headers to be written to a csv file based on trade field names
+func getHeaders() []string {
+	trade := &tradepb.Trade{}
+	t := reflect.TypeOf(trade)
+	headers := []string{}
+	tagName := "csv"
+
+	for i := 0; i < t.Elem().NumField(); i++ {
+		csvtag := t.Elem().Field(i).Tag.Get(tagName)
+		if csvtag != "" {
+			headers = append(headers, csvtag)
+		}
+	}
+	return headers
 }

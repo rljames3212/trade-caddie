@@ -10,21 +10,21 @@ message Trade {
         BUY = 0;
         SELL = 1;
     }
-    // @inject_tag: bson:"type"
+    // @inject_tag: bson:"type" csv:"TYPE"
     Type type = 2;
-    // @inject_tag: bson:"market"
+    // @inject_tag: bson:"market" csv:"MARKET"
     string market = 3;
-    // @inject_tag: bson:"price"
+    // @inject_tag: bson:"price" csv:"PRICE"
     float price = 4;
-    // @inject_tag: bson:"amount"
+    // @inject_tag: bson:"amount" csv:"AMOUNT"
     float amount = 5;
-    // @inject_tag: bson:"fee"
+    // @inject_tag: bson:"fee" csv:"FEE"
     float fee = 6;
-    // @inject_tag: bson:"total"
+    // @inject_tag: bson:"total" csv:"TOTAL"
     float total = 7;
-    // @inject_tag: bson:"fiat_ind"
+    // @inject_tag: bson:"fiat_ind" csv:"FIAT_IND"
     bool fiat_ind = 8;
-    // @inject_tag: bson:"date"
+    // @inject_tag: bson:"date" csv:"DATE"
     int64 date = 9;
 }
 
