@@ -50,20 +50,6 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	err = ImportFromCSV("tradeHistory_poloniex.csv", 1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-	trades, err := GetAllTrades(1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = Export(trades, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
