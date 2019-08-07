@@ -52,22 +52,22 @@ func (Trade_Type) EnumDescriptor() ([]byte, []int) {
 type Trade struct {
 	// @inject_tag: bson:"_id"
 	XId string `protobuf:"bytes,1,opt,name=_id,json=Id,proto3" json:"_id,omitempty" bson:"_id"`
-	// @inject_tag: bson:"type"
-	Type Trade_Type `protobuf:"varint,2,opt,name=type,proto3,enum=trade.Trade_Type" json:"type,omitempty" bson:"type"`
-	// @inject_tag: bson:"market"
-	Market string `protobuf:"bytes,3,opt,name=market,proto3" json:"market,omitempty" bson:"market"`
-	// @inject_tag: bson:"price"
-	Price float32 `protobuf:"fixed32,4,opt,name=price,proto3" json:"price,omitempty" bson:"price"`
-	// @inject_tag: bson:"amount"
-	Amount float32 `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty" bson:"amount"`
-	// @inject_tag: bson:"fee"
-	Fee float32 `protobuf:"fixed32,6,opt,name=fee,proto3" json:"fee,omitempty" bson:"fee"`
-	// @inject_tag: bson:"total"
-	Total float32 `protobuf:"fixed32,7,opt,name=total,proto3" json:"total,omitempty" bson:"total"`
-	// @inject_tag: bson:"fiat_ind"
-	FiatInd bool `protobuf:"varint,8,opt,name=fiat_ind,json=fiatInd,proto3" json:"fiat_ind,omitempty" bson:"fiat_ind"`
-	// @inject_tag: bson:"date"
-	Date                 int64    `protobuf:"varint,9,opt,name=date,proto3" json:"date,omitempty" bson:"date"`
+	// @inject_tag: bson:"type" csv:"TYPE"
+	Type Trade_Type `protobuf:"varint,2,opt,name=type,proto3,enum=trade.Trade_Type" json:"type,omitempty" bson:"type" csv:"TYPE"`
+	// @inject_tag: bson:"market" csv:"MARKET"
+	Market string `protobuf:"bytes,3,opt,name=market,proto3" json:"market,omitempty" bson:"market" csv:"MARKET"`
+	// @inject_tag: bson:"price" csv:"PRICE"
+	Price float32 `protobuf:"fixed32,4,opt,name=price,proto3" json:"price,omitempty" bson:"price" csv:"PRICE"`
+	// @inject_tag: bson:"amount" csv:"AMOUNT"
+	Amount float32 `protobuf:"fixed32,5,opt,name=amount,proto3" json:"amount,omitempty" bson:"amount" csv:"AMOUNT"`
+	// @inject_tag: bson:"fee" csv:"FEE"
+	Fee float32 `protobuf:"fixed32,6,opt,name=fee,proto3" json:"fee,omitempty" bson:"fee" csv:"FEE"`
+	// @inject_tag: bson:"total" csv:"TOTAL"
+	Total float32 `protobuf:"fixed32,7,opt,name=total,proto3" json:"total,omitempty" bson:"total" csv:"TOTAL"`
+	// @inject_tag: bson:"fiat_ind" csv:"FIAT_IND"
+	FiatInd bool `protobuf:"varint,8,opt,name=fiat_ind,json=fiatInd,proto3" json:"fiat_ind,omitempty" bson:"fiat_ind" csv:"FIAT_IND"`
+	// @inject_tag: bson:"date" csv:"DATE"
+	Date                 int64    `protobuf:"varint,9,opt,name=date,proto3" json:"date,omitempty" bson:"date" csv:"DATE"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

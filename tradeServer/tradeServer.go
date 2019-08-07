@@ -89,7 +89,7 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 
 	trade.XId = primitive.NewObjectID().Hex()
 	if trade.GetDate() == 0 {
-		trade.Date = time.Now().UnixNano()
+		trade.Date = time.Now().Unix()
 	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
@@ -213,8 +213,13 @@ func (*server) Export(stream tradepb.TradeService_ExportServer) error {
 		logger.Printf("Error opening export file: %v", err)
 		return err
 	}
+	defer csvfile.Close()
 
 	csvwriter := csv.NewWriter(csvfile)
+	if err := csvwriter.Write(getTradeHeaders()); err != nil {
+		logger.Printf("Error writing headers to csv: %v", err)
+		return err
+	}
 	tradeCount := int32(0)
 	for {
 		trade, err := stream.Recv()
@@ -265,6 +270,11 @@ func (*server) Import(stream tradepb.TradeService_ImportServer) error {
 		}
 
 		trade := req.GetTrade()
+		trade.XId = primitive.NewObjectID().Hex()
+		if trade.GetDate() == 0 {
+			trade.Date = time.Now().Unix()
+		}
+
 		trades = append(trades, trade)
 		portfolioID = req.GetPortfolioId()
 		numTrades++
@@ -321,8 +331,8 @@ func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, st
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.M{
 		"$and": bson.A{
-			bson.M{"date": bson.M{"$gte": startDate.UnixNano()}},
-			bson.M{"date": bson.M{"$lt": endDate.UnixNano()}},
+			bson.M{"date": bson.M{"$gte": startDate.Unix()}},
+			bson.M{"date": bson.M{"$lt": endDate.Unix()}},
 		},
 	}
 
@@ -361,4 +371,20 @@ func rowify(trade *tradepb.Trade) []string {
 		row = append(row, fmt.Sprintf("%v", elem))
 	}
 	return row
+}
+
+// getTradeHeaders returns a slice oh headers to be written to a csv file based on trade field names
+func getTradeHeaders() []string {
+	trade := &tradepb.Trade{}
+	t := reflect.TypeOf(trade)
+	headers := []string{}
+	tagName := "csv"
+
+	for i := 0; i < t.Elem().NumField(); i++ {
+		csvtag := t.Elem().Field(i).Tag.Get(tagName)
+		if csvtag != "" {
+			headers = append(headers, csvtag)
+		}
+	}
+	return headers
 }
