@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"os/signal"
 	"reflect"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -48,6 +50,10 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	err = ImportFromCSV("tradeHistory_poloniex.csv", 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
 	trades, err := GetAllTrades(1, client)
 	if err != nil {
 		log.Fatal(err)
@@ -57,6 +63,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
@@ -188,34 +195,6 @@ func Export(trades []*tradepb.Trade, client tradepb.TradeServiceClient) error {
 	return nil
 }
 
-// importTrades receives a slice of trades and imports them to the specified portfolio
-func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.TradeServiceClient) error {
-	stream, err := client.Import(context.Background())
-	if err != nil {
-		logger.Printf("Error creating import stream: %v", err)
-		return err
-	}
-
-	for _, trade := range trades {
-		err = stream.Send(&tradepb.ImportRequest{
-			Trade:       trade,
-			PortfolioId: portfolioID,
-		})
-		if err != nil {
-			logger.Printf("Error sending trade on import stream: %v", err)
-			return err
-		}
-	}
-	result, err := stream.CloseAndRecv()
-	if err != nil {
-		logger.Printf("Error receiving response from server on export: %v", err)
-		return err
-	}
-
-	logger.Printf("%v trades imported", result.NumImported)
-	return nil
-}
-
 // GetTradesByMarket gets all trades in a specific market from a portfolio
 func GetTradesByMarket(market string, portfolioID int32, client tradepb.TradeServiceClient) ([]*tradepb.Trade, error) {
 	req := &tradepb.GetTradesByMarketRequest{
@@ -272,46 +251,192 @@ func GetTradesByDateRange(startDate, endDate string, portfolioID int32, client t
 	}
 }
 
-// parseRow parses a csv row into a trade
-func parseRow(row []string) (*tradepb.Trade, error) {
+// ImportFromCSV imports trades into a portfolio from a csv file
+func ImportFromCSV(filename string, portfolioID int32, client tradepb.TradeServiceClient) error {
+	csvfile, err := os.Open(filename)
+	if err != nil {
+		logger.Printf("Error opening %v for import: %v", filename, err)
+		return err
+	}
+	csvreader := csv.NewReader(csvfile)
+	headers, err := csvreader.Read()
+	if err != nil {
+		logger.Printf("Error reading headers in %v: %v", filename, err)
+		return err
+	}
+
+	var updatedHeaders []string
+	for _, header := range headers {
+		updatedHeaders = append(updatedHeaders, strings.ToUpper(header))
+	}
+
+	rows, err := csvreader.ReadAll()
+	if err != nil {
+		logger.Printf("Error reading csv rows in %v: %v", filename, err)
+		return err
+	}
+
+	trades := []*tradepb.Trade{}
+	for _, row := range rows {
+		trade, err := parseRow(updatedHeaders, row)
+		if err != nil {
+			logger.Printf("Error parsing row to trade: %v", err)
+		}
+		trades = append(trades, trade)
+	}
+
+	return importTrades(trades, portfolioID, client)
+}
+
+// importTrades receives a slice of trades and imports them to the specified portfolio
+func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.TradeServiceClient) error {
+	stream, err := client.Import(context.Background())
+	if err != nil {
+		logger.Printf("Error creating import stream: %v", err)
+		return err
+	}
+
+	for _, trade := range trades {
+		err = stream.Send(&tradepb.ImportRequest{
+			Trade:       trade,
+			PortfolioId: portfolioID,
+		})
+		if err != nil {
+			logger.Printf("Error sending trade on import stream: %v", err)
+			return err
+		}
+	}
+	result, err := stream.CloseAndRecv()
+	if err != nil {
+		logger.Printf("Error receiving response from server on export: %v", err)
+		return err
+	}
+
+	logger.Printf("%v trades imported", result.NumImported)
+	return nil
+}
+
+// parseRow parses a csv row to a trade. Returns an error if row can't be parsed
+func parseRow(headers, row []string) (*tradepb.Trade, error) {
 	trade := tradepb.Trade{}
 	val := reflect.ValueOf(&trade)
-	for i, field := range row {
-		tradeField := val.Elem().Field(i)
-		switch tradeField.Interface().(type) {
-		case string:
-			temp := string([]byte(field))
-			tradeField.SetString(temp)
-		case int32, int64:
-			num, err := strconv.Atoi(field)
+
+	feeIndex := 0
+	for i, header := range headers {
+		tradeFieldIndex, err := matchHeaderToTradeField(header)
+		if err != nil {
+			continue
+		}
+		tradeField := val.Elem().Field(tradeFieldIndex)
+
+		if strings.Contains(header, "DATE") {
+			ts, err := parseDate(row[i])
 			if err != nil {
-				logger.Printf("Error parsing string ( %v ) to int: %v", field, err)
+				log.Printf("Error unable to parse date: %v", err)
+			}
+			tradeField.SetInt(ts)
+		} else if header == "FEE" {
+			feeIndex = i
+			continue
+		} else {
+			switch tradeField.Interface().(type) {
+			case string:
+				temp := string([]byte(row[i]))
+				tradeField.SetString(temp)
+			case int32, int64:
+				num, err := strconv.Atoi(row[i])
+				if err != nil {
+					log.Printf("Error parsing string ( %v ) to int: %v", row[i], err)
+					return nil, err
+				}
+				tradeField.SetInt(int64(num))
+			case float32:
+				num, err := strconv.ParseFloat(row[i], 32)
+				if err != nil {
+					log.Printf("Error parsing string ( %v ) to float: %v", row[i], err)
+					return nil, err
+				}
+				tradeField.SetFloat(num)
+			case bool:
+				b, err := strconv.ParseBool(row[i])
+				if err != nil {
+					log.Printf("Error parsing string ( %v ) to bool: %v", row[i], err)
+					return nil, err
+				}
+				tradeField.SetBool(b)
+			case tradepb.Trade_Type:
+				x := tradepb.Trade_Type_value[strings.ToUpper(row[i])]
+				tradeField.Set(reflect.ValueOf(tradepb.Trade_Type(x)))
+			default:
+				err := fmt.Errorf("Error unexpected type parsing string ( %v )", row[i])
+				log.Println(err)
 				return nil, err
 			}
-			tradeField.SetInt(int64(num))
-		case float32:
-			num, err := strconv.ParseFloat(field, 32)
-			if err != nil {
-				logger.Printf("Error parsing string ( %v ) to float: %v", field, err)
-				return nil, err
-			}
-			tradeField.SetFloat(num)
-		case bool:
-			b, err := strconv.ParseBool(field)
-			if err != nil {
-				logger.Printf("Error parsing string ( %v ) to bool: %v", field, err)
-				return nil, err
-			}
-			tradeField.SetBool(b)
-		case tradepb.Trade_Type:
-			x := tradepb.Trade_Type_value[field]
-			tradeField.Set(reflect.ValueOf(tradepb.Trade_Type(x)))
-		default:
-			err := fmt.Errorf("Error unexpected type parsing string ( %v )", field)
-			logger.Println(err)
-			return nil, err
+		}
+	}
+
+	// set fee field after all other fields have been set
+	f, err := parseFee(row[feeIndex], &val)
+	if err != nil {
+		log.Printf("Error unable to parse fee: %v", err)
+		return nil, err
+	}
+	val.Elem().FieldByName("Fee").SetFloat(float64(f))
+
+	return &trade, nil
+}
+
+// matchHeaderToTradeField returns the index of a field in a tradepb.Trade type that has a provided csv struct tag
+func matchHeaderToTradeField(fieldName string) (int, error) {
+	val := reflect.TypeOf(tradepb.Trade{})
+	for i := 0; i < val.NumField(); i++ {
+		tag := val.Field(i).Tag.Get("csv")
+		if tag == fieldName {
+			return i, nil
+		}
+		if strings.Contains(fieldName, "DATE") && tag == "DATE" {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("Header not found")
+}
+
+func parseDate(date string) (int64, error) {
+	// check if date is a timestamp
+	timestamp, err := strconv.Atoi(date)
+	if err == nil {
+		return int64(timestamp), nil
+	}
+
+	parsedTime, err := time.Parse("2006-01-02 15:04:05", date)
+	if err != nil {
+		return 0, err
+	}
+	return parsedTime.Unix(), nil
+}
+
+func parseFee(fee string, trade *reflect.Value) (float32, error) {
+	var parsedFee float64
+	if strings.HasSuffix(fee, "%") {
+		percent, err := strconv.ParseFloat(strings.TrimSuffix(fee, "%"), 32)
+		if err != nil {
+			logger.Printf("Error parsing fee percentage ( %v ): %v", fee, err)
+			return float32(0), err
 		}
 
+		tradePriceIndex, _ := matchHeaderToTradeField("PRICE")
+		tradeAmountIndex, _ := matchHeaderToTradeField("AMOUNT")
+
+		p := trade.Elem().Field(tradePriceIndex).Float()
+		a := trade.Elem().Field(tradeAmountIndex).Float()
+		parsedFee = p * a * percent
+		return float32(parsedFee), nil
 	}
-	return &trade, nil
+	parsedFee, err := strconv.ParseFloat(fee, 32)
+	if err != nil {
+		logger.Printf("Error parsing fee to float ( %v ): %v", fee, err)
+		return float32(0), err
+	}
+	return float32(parsedFee), nil
+
 }
