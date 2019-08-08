@@ -50,6 +50,29 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	err = DeleteAllTrades(1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = ImportFromCSV("tradeHistory_binance.csv", 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	trades, err := GetTradesByDateRange("2018-01-01 00:00:00", "2018-01-10 00:00:00", 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ids := []string{}
+	for _, trade := range trades {
+		ids = append(ids, trade.GetXId())
+	}
+
+	err = DeleteTrades(ids, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
@@ -95,6 +118,38 @@ func DeleteTrade(tradeID string, portfolioID int32, client tradepb.TradeServiceC
 		return err
 	}
 
+	return nil
+}
+
+// DeleteTrades deletes all trades with given IDs
+func DeleteTrades(ids []string, portfolioID int32, client tradepb.TradeServiceClient) error {
+	req := &tradepb.DeleteTradesRequest{
+		Id:          ids,
+		PortfolioId: portfolioID,
+	}
+
+	res, err := client.DeleteTrades(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling DeleteTrades: %v", err)
+		return err
+	}
+
+	logger.Printf("Deleted %v trades from portfolio %v", res.GetDeletedCount(), portfolioID)
+	return nil
+}
+
+// DeleteAllTrades deletes all trades in a portfolio
+func DeleteAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
+	req := &tradepb.DeleteAllTradesRequest{
+		PortfolioId: portfolioID,
+	}
+
+	res, err := client.DeleteAllTrades(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling DeleteAllTrades: %v", err)
+		return err
+	}
+	logger.Printf("Deleted %v trades from portfolio: %v", res.GetDeletedCount(), portfolioID)
 	return nil
 }
 

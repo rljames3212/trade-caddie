@@ -110,9 +110,28 @@ message ImportResponse {
     int32 numImported = 1;
 }
 
+message DeleteTradesRequest {
+    repeated string id = 1;
+    int32 portfolioId = 2;
+}
+
+message DeleteTradesResponse {
+    int32 deletedCount = 1;
+}
+
+message DeleteAllTradesRequest {
+    int32 portfolioId = 1;
+}
+
+message DeleteAllTradesResponse {
+    int32 deletedCount = 1;
+}
+
 service TradeService {
     rpc AddTrade (AddTradeRequest) returns (AddTradeResponse) {};
     rpc DeleteTrade (DeleteTradeRequest) returns (DeleteTradeResponse) {};
+    rpc DeleteTrades (DeleteTradesRequest) returns (DeleteTradesResponse) {};
+    rpc DeleteAllTrades (DeleteAllTradesRequest) returns (DeleteAllTradesResponse) {};
     rpc UpdateTrade (UpdateTradeRequest) returns (UpdateTradeResponse) {};
     rpc GetTrade (GetTradeRequest) returns (GetTradeResponse) {};
     rpc GetTradesByMarket (GetTradesByMarketRequest) returns (stream GetTradesByMarketResponse) {};

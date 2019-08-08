@@ -127,6 +127,48 @@ func (*server) DeleteTrade(ctx context.Context, req *tradepb.DeleteTradeRequest)
 	return res, nil
 }
 
+// DeleteTrades deletes trades from a portfolio whose ID is in a slice of IDs
+func (*server) DeleteTrades(ctx context.Context, req *tradepb.DeleteTradesRequest) (*tradepb.DeleteTradesResponse, error) {
+	ids := req.GetId()
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.M{
+		"_id": bson.M{
+			"$in": ids,
+		},
+	}
+
+	res, err := tradeCollection.DeleteMany(ctx, filter)
+	if err != nil {
+		logger.Printf("Error deleting trades from database: %v", err)
+		return nil, err
+	}
+
+	logger.Printf("Deleted %v trades from portfolio %v", res.DeletedCount, portfolioID)
+	return &tradepb.DeleteTradesResponse{
+		DeletedCount: int32(res.DeletedCount),
+	}, nil
+}
+
+// DeleteAllTrades deletes all trades in a portfolio
+func (*server) DeleteAllTrades(ctx context.Context, req *tradepb.DeleteAllTradesRequest) (*tradepb.DeleteAllTradesResponse, error) {
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.D{{}}
+
+	res, err := tradeCollection.DeleteMany(ctx, filter)
+	if err != nil {
+		logger.Printf("Error deleting all trades in portfolio %v: %v", portfolioID, err)
+		return nil, err
+	}
+
+	return &tradepb.DeleteAllTradesResponse{
+		DeletedCount: int32(res.DeletedCount),
+	}, nil
+}
+
 // UpdateTrade updates a trade
 func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest) (*tradepb.UpdateTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
@@ -316,12 +358,12 @@ func (*server) GetTradesByMarket(req *tradepb.GetTradesByMarketRequest, stream t
 
 // GetTradesByDateRange returns a stream of trades within a specified date range
 func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, stream tradepb.TradeService_GetTradesByDateRangeServer) error {
-	startDate, err := time.Parse("2006-01-02T15:04:05", req.GetStartDate())
+	startDate, err := time.Parse("2006-01-02 15:04:05", req.GetStartDate())
 	if err != nil {
 		logger.Printf("Error parsing startDate ( %v ) to timestamp: %v", startDate, err)
 		return err
 	}
-	endDate, err := time.Parse("2006-01-02T15:04:05", req.GetEndDate())
+	endDate, err := time.Parse("2006-01-02 15:04:05", req.GetEndDate())
 	if err != nil {
 		logger.Printf("Error parsing endDate ( %v ) to timestamp: %v", endDate, err)
 		return err
