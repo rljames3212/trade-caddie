@@ -98,6 +98,38 @@ func DeleteTrade(tradeID string, portfolioID int32, client tradepb.TradeServiceC
 	return nil
 }
 
+// DeleteTrades deletes all trades with given IDs
+func DeleteTrades(ids []string, portfolioID int32, client tradepb.TradeServiceClient) error {
+	req := &tradepb.DeleteTradesRequest{
+		Id:          ids,
+		PortfolioId: portfolioID,
+	}
+
+	res, err := client.DeleteTrades(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling DeleteTrades: %v", err)
+		return err
+	}
+
+	logger.Printf("Deleted %v trades from portfolio %v", res.GetDeletedCount(), portfolioID)
+	return nil
+}
+
+// DeleteAllTrades deletes all trades in a portfolio
+func DeleteAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error {
+	req := &tradepb.DeleteAllTradesRequest{
+		PortfolioId: portfolioID,
+	}
+
+	res, err := client.DeleteAllTrades(context.Background(), req)
+	if err != nil {
+		logger.Printf("Error calling DeleteAllTrades: %v", err)
+		return err
+	}
+	logger.Printf("Deleted %v trades from portfolio: %v", res.GetDeletedCount(), portfolioID)
+	return nil
+}
+
 // GetTrade retrieves the trade from the databsse with a given _id
 func GetTrade(tradeID string, portfolioID int32, client tradepb.TradeServiceClient) (*tradepb.Trade, error) {
 	req := &tradepb.GetTradeRequest{
