@@ -73,7 +73,7 @@ func main() {
 		logger.Printf("signal: %+v received. Shutting down", sig)
 		defer loggerFile.Close()
 		db.Disconnect(context.Background())
-		os.Exit(0)
+		grpcServer.Stop()
 	}()
 
 	// start server
