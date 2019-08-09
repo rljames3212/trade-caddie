@@ -50,6 +50,11 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	err = DeleteAllTrades(1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	done := make(chan interface{})
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
@@ -73,8 +78,11 @@ func AddTrade(trade *tradepb.Trade, portfolioID int32, client tradepb.TradeServi
 		Trade:       trade,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	res, err := client.AddTrade(context.Background(), req)
+	res, err := client.AddTrade(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling AddTrade: %v", err)
 		return "", err
@@ -89,8 +97,11 @@ func DeleteTrade(tradeID string, portfolioID int32, client tradepb.TradeServiceC
 		TradeId:     tradeID,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	_, err := client.DeleteTrade(context.Background(), req)
+	_, err := client.DeleteTrade(ctx, req)
 	if err != nil {
 		logger.Fatalf("Error calling DeleteTrade: %v", err)
 		return err
@@ -105,8 +116,11 @@ func DeleteTrades(ids []string, portfolioID int32, client tradepb.TradeServiceCl
 		Id:          ids,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	res, err := client.DeleteTrades(context.Background(), req)
+	res, err := client.DeleteTrades(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling DeleteTrades: %v", err)
 		return err
@@ -121,8 +135,11 @@ func DeleteAllTrades(portfolioID int32, client tradepb.TradeServiceClient) error
 	req := &tradepb.DeleteAllTradesRequest{
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	res, err := client.DeleteAllTrades(context.Background(), req)
+	res, err := client.DeleteAllTrades(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling DeleteAllTrades: %v", err)
 		return err
@@ -137,8 +154,11 @@ func GetTrade(tradeID string, portfolioID int32, client tradepb.TradeServiceClie
 		TradeId:     tradeID,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	res, err := client.GetTrade(context.Background(), req)
+	res, err := client.GetTrade(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling GetTrade: %v", err)
 		return nil, err
@@ -153,8 +173,11 @@ func UpdateTrade(tradeID string, trade *tradepb.Trade, portfolioID int32, client
 		PortfolioId: portfolioID,
 		Trade:       trade,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	_, err := client.UpdateTrade(context.Background(), req)
+	_, err := client.UpdateTrade(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling UpdateTrade with tradeID %v: %v", tradeID, err)
 		return err
@@ -167,8 +190,11 @@ func GetAllTrades(portfolioID int32, client tradepb.TradeServiceClient) ([]*trad
 	req := &tradepb.GetAllTradesRequest{
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	stream, err := client.GetAllTrades(context.Background(), req)
+	stream, err := client.GetAllTrades(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling GetAllTrades with portfolio %v: %v", portfolioID, err)
 		return nil, err
@@ -220,8 +246,11 @@ func GetTradesByMarket(market string, portfolioID int32, client tradepb.TradeSer
 		Market:      market,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	stream, err := client.GetTradesByMarket(context.Background(), req)
+	stream, err := client.GetTradesByMarket(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling GetTradesByMarket with market: %v and portfolio %v: %v", market, portfolioID, err)
 		return nil, err
@@ -249,8 +278,11 @@ func GetTradesByDateRange(startDate, endDate string, portfolioID int32, client t
 		EndDate:     endDate,
 		PortfolioId: portfolioID,
 	}
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
 
-	stream, err := client.GetTradesByDateRange(context.Background(), req)
+	stream, err := client.GetTradesByDateRange(ctx, req)
 	if err != nil {
 		logger.Printf("Error calling GetTradesByDateRange with start date: %v , end date: %v , and portfolio %v: %v", startDate, endDate, portfolioID, err)
 		return nil, err
@@ -277,6 +309,8 @@ func ImportFromCSV(filename string, portfolioID int32, client tradepb.TradeServi
 		logger.Printf("Error opening %v for import: %v", filename, err)
 		return err
 	}
+	defer csvfile.Close()
+
 	csvreader := csv.NewReader(csvfile)
 	headers, err := csvreader.Read()
 	if err != nil {
@@ -309,7 +343,11 @@ func ImportFromCSV(filename string, portfolioID int32, client tradepb.TradeServi
 
 // importTrades receives a slice of trades and imports them to the specified portfolio
 func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.TradeServiceClient) error {
-	stream, err := client.Import(context.Background())
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+
+	stream, err := client.Import(ctx)
 	if err != nil {
 		logger.Printf("Error creating import stream: %v", err)
 		return err

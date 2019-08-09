@@ -20,6 +20,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var port *string
@@ -92,6 +94,10 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 		trade.Date = time.Now().Unix()
 	}
 
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
+
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	insertResult, err := tradeCollection.InsertOne(ctx, trade)
 
@@ -110,6 +116,10 @@ func (*server) AddTrade(ctx context.Context, req *tradepb.AddTradeRequest) (*tra
 func (*server) DeleteTrade(ctx context.Context, req *tradepb.DeleteTradeRequest) (*tradepb.DeleteTradeResponse, error) {
 	portfolioID := req.GetPortfolioId()
 	tradeID := req.GetTradeId()
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
@@ -139,6 +149,10 @@ func (*server) DeleteTrades(ctx context.Context, req *tradepb.DeleteTradesReques
 		},
 	}
 
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
+
 	res, err := tradeCollection.DeleteMany(ctx, filter)
 	if err != nil {
 		logger.Printf("Error deleting trades from database: %v", err)
@@ -157,6 +171,10 @@ func (*server) DeleteAllTrades(ctx context.Context, req *tradepb.DeleteAllTrades
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{}}
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
 
 	res, err := tradeCollection.DeleteMany(ctx, filter)
 	if err != nil {
@@ -178,6 +196,11 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
 	update := bson.M{"$set": updatedTrade}
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
+
 	updateResult, err := tradeCollection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
@@ -199,6 +222,10 @@ func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tra
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
 	filter := bson.D{{Key: "_id", Value: tradeID}}
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+	}
 
 	var trade tradepb.Trade
 	err := tradeCollection.FindOne(ctx, filter).Decode(&trade)
