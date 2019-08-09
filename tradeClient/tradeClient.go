@@ -50,6 +50,7 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
+	done := make(chan interface{})
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, syscall.SIGINT)
@@ -60,10 +61,10 @@ func main() {
 		sig := <-stopChan
 		logger.Printf("signal: %+v received. Shutting down", sig)
 		defer logFile.Close()
-		os.Exit(0)
+		done <- sig
 	}()
 
-	<-stopChan
+	<-done
 }
 
 // AddTrade adds a trade to a portfolio
