@@ -118,7 +118,7 @@ func (*server) DeleteTrade(ctx context.Context, req *tradepb.DeleteTradeRequest)
 	tradeID := req.GetTradeId()
 
 	if ctx.Err() == context.Canceled {
-		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+		return nil, status.Error(codes.Canceled, "Client canceled DeleteTrade request")
 	}
 
 	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
@@ -150,7 +150,7 @@ func (*server) DeleteTrades(ctx context.Context, req *tradepb.DeleteTradesReques
 	}
 
 	if ctx.Err() == context.Canceled {
-		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+		return nil, status.Error(codes.Canceled, "Client canceled DeleteTrades request")
 	}
 
 	res, err := tradeCollection.DeleteMany(ctx, filter)
@@ -173,7 +173,7 @@ func (*server) DeleteAllTrades(ctx context.Context, req *tradepb.DeleteAllTrades
 	filter := bson.D{{}}
 
 	if ctx.Err() == context.Canceled {
-		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+		return nil, status.Error(codes.Canceled, "Client canceled DeleteAllTrades request")
 	}
 
 	res, err := tradeCollection.DeleteMany(ctx, filter)
@@ -198,7 +198,7 @@ func (*server) UpdateTrade(ctx context.Context, req *tradepb.UpdateTradeRequest)
 	update := bson.M{"$set": updatedTrade}
 
 	if ctx.Err() == context.Canceled {
-		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+		return nil, status.Error(codes.Canceled, "Client canceled UpdateTrade request")
 	}
 
 	updateResult, err := tradeCollection.UpdateOne(ctx, filter, update)
@@ -224,7 +224,7 @@ func (*server) GetTrade(ctx context.Context, req *tradepb.GetTradeRequest) (*tra
 	filter := bson.D{{Key: "_id", Value: tradeID}}
 
 	if ctx.Err() == context.Canceled {
-		return nil, status.Error(codes.Canceled, "Client canceled AddTrade request")
+		return nil, status.Error(codes.Canceled, "Client canceled GetTrade request")
 	}
 
 	var trade tradepb.Trade
