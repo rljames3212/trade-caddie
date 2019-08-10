@@ -50,11 +50,6 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	err = DeleteAllTrades(1, client)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	done := make(chan interface{})
 	// channel to receive interrupt command
 	stopChan := make(chan os.Signal, 1)
