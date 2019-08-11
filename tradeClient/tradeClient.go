@@ -282,6 +282,26 @@ func (tc *TradeClient) GetTradesByDateRange(startDate, endDate string, portfolio
 	}
 }
 
+// TotalBalance returns the total balance in a portfolio
+func TotalBalance(endDate string, portfolioID int32, client tradepb.TradeServiceClient) (float32, error) {
+	req := &tradepb.TotalBalanceRequest{
+		EndDate:     endDate,
+		PortfolioId: portfolioID,
+	}
+
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+
+	res, err := client.TotalBalance(ctx, req)
+	if err != nil {
+		logger.Printf("Error calling TotalBalance: %v", err)
+		return 0.0, err
+	}
+
+	return res.GetBalance(), nil
+}
+
 // ImportFromCSV imports trades into a portfolio from a csv file
 func (tc *TradeClient) ImportFromCSV(filename string, portfolioID int32) error {
 	csvfile, err := os.Open(filename)
