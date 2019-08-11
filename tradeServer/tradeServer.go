@@ -429,6 +429,49 @@ func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, st
 	return nil
 }
 
+func (*server) TotalBalance(ctx context.Context, req *tradepb.TotalBalanceRequest) (*tradepb.TotalBalanceResponse, error) {
+	endDate, err := time.Parse("2006-01-02 15:04:05", req.GetEndDate())
+	if err != nil {
+		logger.Printf("Error parsing endDate ( %v ) to timestamp: %v", endDate, err)
+		return nil, err
+	}
+	portfolioID := req.GetPortfolioId()
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.M{"date": bson.M{"$lt": endDate.Unix()}}
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled TotalBalance Request")
+	}
+
+	cursor, err := tradeCollection.Find(ctx, filter)
+	if err != nil {
+		logger.Printf("Error querying database in TotalBalance: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var balance float32
+	var trade tradepb.Trade
+	for cursor.Next(ctx) {
+		err = cursor.Decode(&trade)
+		if err != nil {
+			logger.Printf("Error decoding trade in TotalBalance: %v", err)
+			return nil, err
+		}
+
+		if trade.GetType() == tradepb.Trade_BUY {
+			balance += trade.GetTotal()
+		} else {
+			balance -= trade.GetTotal()
+		}
+	}
+
+	return &tradepb.TotalBalanceResponse{
+		Balance: balance,
+	}, nil
+}
+
 // rowify parses a trade into a string that represents a csv row
 func rowify(trade *tradepb.Trade) []string {
 	val := reflect.Indirect(reflect.ValueOf(trade))
