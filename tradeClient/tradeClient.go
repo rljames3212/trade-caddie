@@ -282,26 +282,6 @@ func (tc *TradeClient) GetTradesByDateRange(startDate, endDate string, portfolio
 	}
 }
 
-// TotalBalance returns the total balance in a portfolio
-func TotalBalance(endDate string, portfolioID int32, client tradepb.TradeServiceClient) (float32, error) {
-	req := &tradepb.TotalBalanceRequest{
-		EndDate:     endDate,
-		PortfolioId: portfolioID,
-	}
-
-	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	defer cancel()
-
-	res, err := client.TotalBalance(ctx, req)
-	if err != nil {
-		logger.Printf("Error calling TotalBalance: %v", err)
-		return 0.0, err
-	}
-
-	return res.GetBalance(), nil
-}
-
 // ImportFromCSV imports trades into a portfolio from a csv file
 func (tc *TradeClient) ImportFromCSV(filename string, portfolioID int32) error {
 	csvfile, err := os.Open(filename)
@@ -339,6 +319,26 @@ func (tc *TradeClient) ImportFromCSV(filename string, portfolioID int32) error {
 	}
 
 	return importTrades(trades, portfolioID, tc.client)
+}
+
+// GetBalance returns the balance of a certain coin in a given portfolio
+func GetBalance(coinID string, portfolioID int32, client tradepb.TradeServiceClient) (float32, error) {
+	req := &tradepb.GetBalanceRequest{
+		Coin:        coinID,
+		PortfolioId: portfolioID,
+	}
+
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
+	defer cancel()
+
+	res, err := client.GetBalance(ctx, req)
+	if err != nil {
+		logger.Printf("Error calling GetBalance in portfolio %v with coin %v: %v", portfolioID, coinID, err)
+		return 0.0, err
+	}
+
+	return res.GetBalance(), nil
 }
 
 // importTrades receives a slice of trades and imports them to the specified portfolio
