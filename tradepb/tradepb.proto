@@ -127,13 +127,14 @@ message DeleteAllTradesResponse {
     int32 deletedCount = 1;
 }
 
-message TotalBalanceRequest {
+message GetBalanceRequest {
     int32 portfolioId = 1;
-    string end_date = 2;
+    string coin = 2;
 }
 
-message TotalBalanceResponse {
-    float balance = 1;
+message GetBalanceResponse {
+    string coin = 1;
+    float balance = 2;
 }
 
 service TradeService {
@@ -148,5 +149,5 @@ service TradeService {
     rpc GetAllTrades (GetAllTradesRequest) returns (stream GetAllTradesResponse) {};
     rpc Export (stream ExportRequest) returns (ExportResponse) {};
     rpc Import (stream ImportRequest) returns (ImportResponse) {};
-    rpc TotalBalance (TotalBalanceRequest) returns (TotalBalanceResponse) {};
+    rpc GetBalance (GetBalanceRequest) returns (GetBalanceResponse) {};
 }
