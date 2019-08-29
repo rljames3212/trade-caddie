@@ -50,11 +50,73 @@ func main() {
 	// initialize client
 	client = tradepb.NewTradeServiceClient(conn)
 
-	bal, err := GetBalance("BSV", 1, client)
+	err = DeleteAllTrades(1, client)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println(bal)
+
+	trade := &tradepb.Trade{
+		Type:    tradepb.Trade_BUY,
+		Market:  "ETHBTC",
+		Amount:  1.0,
+		Price:   .06,
+		Fee:     0.01,
+		Total:   0.07,
+		FiatInd: false,
+	}
+
+	trade2 := &tradepb.Trade{
+		Type:    tradepb.Trade_SELL,
+		Market:  "ETHBTC",
+		Amount:  0.5,
+		Price:   .06,
+		Fee:     0.01,
+		Total:   0.07,
+		FiatInd: false,
+	}
+
+	trade3 := &tradepb.Trade{
+		Type:    tradepb.Trade_BUY,
+		Market:  "ADAETH",
+		Amount:  500.0,
+		Price:   .001,
+		Fee:     0.01,
+		Total:   0.5,
+		FiatInd: false,
+	}
+
+	trade4 := &tradepb.Trade{
+		Type:    tradepb.Trade_SELL,
+		Market:  "ADAETH",
+		Amount:  300.0,
+		Price:   .001,
+		Fee:     0.01,
+		Total:   0.3,
+		FiatInd: false,
+	}
+
+	_, err = AddTrade(trade, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = AddTrade(trade2, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = AddTrade(trade3, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = AddTrade(trade4, 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bal, err := GetBalance("ETH", 1, client)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print(bal)
 
 	done := make(chan interface{})
 	// channel to receive interrupt command
@@ -516,5 +578,4 @@ func parseFee(fee string, trade *reflect.Value) (float32, error) {
 		return float32(0), err
 	}
 	return float32(parsedFee), nil
-
 }

@@ -500,6 +500,7 @@ func updateBalance(trade *tradepb.Trade, coinID string, bal float32) float32 {
 	tradeType := trade.GetType()
 	tradeMarket := trade.GetMarket()
 	tradeAmount := trade.GetAmount()
+	tradeTotal := trade.GetTotal()
 
 	if strings.HasPrefix(tradeMarket, coinID) {
 		if tradeType == tradepb.Trade_BUY {
@@ -509,14 +510,11 @@ func updateBalance(trade *tradepb.Trade, coinID string, bal float32) float32 {
 		}
 	} else if strings.HasSuffix(tradeMarket, coinID) {
 		if tradeType == tradepb.Trade_BUY {
-			bal -= tradeAmount
+			bal -= tradeTotal
 		} else {
-			bal += tradeAmount
+			tradeTotal -= trade.GetFee()
+			bal += tradeTotal
 		}
-	}
-
-	if bal < 0 {
-		bal = 0
 	}
 
 	return bal
