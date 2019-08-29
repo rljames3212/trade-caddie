@@ -495,5 +495,4 @@ func parseFee(fee string, trade *reflect.Value) (float32, error) {
 		return float32(0), err
 	}
 	return float32(parsedFee), nil
-
 }
