@@ -27,14 +27,7 @@ type TradeClient struct {
 }
 
 // NewTradeClient returns a tradeClient connected to the TradeServer running on port
-func NewTradeClient(port string) TradeClient {
-	// create grpc connection
-	conn, err := grpc.Dial(port, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Error connecting to server: %v", err)
-	}
-	defer conn.Close()
-
+func NewTradeClient(conn *grpc.ClientConn) TradeClient {
 	// initialize client
 	client := tradepb.NewTradeServiceClient(conn)
 
@@ -177,7 +170,7 @@ func (tc *TradeClient) GetAllTrades(portfolioID int32) ([]*tradepb.Trade, error)
 	req := &tradepb.GetAllTradesRequest{
 		PortfolioId: portfolioID,
 	}
-	clientDeadline := time.Now().Add(time.Duration(2 * time.Second))
+	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
 	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 
