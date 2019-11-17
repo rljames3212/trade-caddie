@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"syscall"
 	"time"
 	"trade-caddie/tradepb"
@@ -429,6 +430,43 @@ func (*server) GetTradesByDateRange(req *tradepb.GetTradesByDateRangeRequest, st
 	return nil
 }
 
+func (*server) GetBalance(ctx context.Context, req *tradepb.GetBalanceRequest) (*tradepb.GetBalanceResponse, error) {
+	portfolioID := req.GetPortfolioId()
+	coinID := req.GetCoin()
+	regex := primitive.Regex{Pattern: fmt.Sprintf("/*%s*", coinID), Options: "i"}
+
+	tradeCollection := db.Database("trade-caddie").Collection(fmt.Sprintf("portfolio_%v", portfolioID))
+	filter := bson.M{"market": bson.M{"$regex": regex}}
+
+	if ctx.Err() == context.Canceled {
+		return nil, status.Error(codes.Canceled, "Client canceled GetBalance Request")
+	}
+
+	cursor, err := tradeCollection.Find(ctx, filter)
+	if err != nil {
+		logger.Printf("Error querying database in GetBalance: %v", err)
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var balance float32
+	var trade tradepb.Trade
+	for cursor.Next(ctx) {
+		err = cursor.Decode(&trade)
+		if err != nil {
+			logger.Printf("Error decoding trade in GetBalance: %v", err)
+			return nil, err
+		}
+
+		balance = updateBalance(&trade, coinID, balance)
+	}
+
+	return &tradepb.GetBalanceResponse{
+		Coin:    coinID,
+		Balance: balance,
+	}, nil
+}
+
 // rowify parses a trade into a string that represents a csv row
 func rowify(trade *tradepb.Trade) []string {
 	val := reflect.Indirect(reflect.ValueOf(trade))
@@ -456,4 +494,28 @@ func getTradeHeaders() []string {
 		}
 	}
 	return headers
+}
+
+func updateBalance(trade *tradepb.Trade, coinID string, bal float32) float32 {
+	tradeType := trade.GetType()
+	tradeMarket := trade.GetMarket()
+	tradeAmount := trade.GetAmount()
+	tradeTotal := trade.GetTotal()
+
+	if strings.HasPrefix(tradeMarket, coinID) {
+		if tradeType == tradepb.Trade_BUY {
+			bal += tradeAmount
+		} else {
+			bal -= tradeAmount
+		}
+	} else if strings.HasSuffix(tradeMarket, coinID) {
+		if tradeType == tradepb.Trade_BUY {
+			bal -= tradeTotal
+		} else {
+			tradeTotal -= trade.GetFee()
+			bal += tradeTotal
+		}
+	}
+
+	return bal
 }
