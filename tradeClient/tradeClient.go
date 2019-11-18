@@ -341,26 +341,6 @@ func GetBalance(coinID string, portfolioID int32, client tradepb.TradeServiceCli
 	return res.GetBalance(), nil
 }
 
-// GetBalance returns the balance of a certain coin in a given portfolio
-func GetBalance(coinID string, portfolioID int32, client tradepb.TradeServiceClient) (float32, error) {
-	req := &tradepb.GetBalanceRequest{
-		Coin:        coinID,
-		PortfolioId: portfolioID,
-	}
-
-	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
-	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
-	defer cancel()
-
-	res, err := client.GetBalance(ctx, req)
-	if err != nil {
-		logger.Printf("Error calling GetBalance in portfolio %v with coin %v: %v", portfolioID, coinID, err)
-		return 0.0, err
-	}
-
-	return res.GetBalance(), nil
-}
-
 // importTrades receives a slice of trades and imports them to the specified portfolio
 func importTrades(trades []*tradepb.Trade, portfolioID int32, client tradepb.TradeServiceClient) error {
 	clientDeadline := time.Now().Add(time.Duration(1 * time.Second))
